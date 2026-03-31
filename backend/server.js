@@ -36,6 +36,13 @@ const userSchema = new mongoose.Schema({
   avatar: String,
   createdAt: { type: Date, default: Date.now },
   lastActive: { type: Date, default: Date.now },
+  history: [{
+    songTitle: String,
+    artist: String,
+    artwork: String,
+    timestamp: { type: Date, default: Date.now },
+    durationMs: Number,
+  }],
 });
 
 const User = mongoose.model('User', userSchema);
@@ -47,7 +54,7 @@ const User = mongoose.model('User', userSchema);
 // Register or Sync User (Global Login)
 app.post('/api/auth/sync', async (req, res) => {
   try {
-    const { id, name, email, avatar } = req.body;
+    const { id, name, email, avatar, history } = req.body;
     if (!email) return res.status(400).json({ error: 'Email required' });
 
     let user = await User.findOne({ email: email.toLowerCase() });
@@ -56,13 +63,24 @@ app.post('/api/auth/sync', async (req, res) => {
       user.lastActive = new Date();
       if (name) user.name = name;
       if (avatar) user.avatar = avatar;
+      
+      // Merge history if provided (cloud persistence)
+      if (history && Array.isArray(history)) {
+        const existingTitles = new Set(user.history.map(h => h.songTitle));
+        const newEntries = history.filter(h => !existingTitles.has(h.songTitle));
+        if (newEntries.length > 0) {
+          user.history.push(...newEntries);
+        }
+      }
+      
       await user.save();
     } else {
       user = new User({
         id: id || Date.now().toString(),
         name,
         email: email.toLowerCase(),
-        avatar
+        avatar,
+        history: history || []
       });
       await user.save();
     }
@@ -71,6 +89,22 @@ app.post('/api/auth/sync', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Sync failed' });
+  }
+});
+
+// Update History specifically
+app.post('/api/user/history', async (req, res) => {
+  try {
+    const { email, entry } = req.body;
+    if (!email || !entry) return res.status(400).send();
+    
+    await User.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { $push: { history: { $each: [entry], $position: 0, $slice: 100 } } }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).send();
   }
 });
 

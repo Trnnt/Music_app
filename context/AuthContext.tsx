@@ -92,19 +92,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email: user.email }),
       });
     } catch (e) {
-      console.log('Heartbeat sync failed');
+      // Silent fail for heartbeat
     }
   };
 
-  const syncWithServer = async (userData: User) => {
+  const syncWithServer = async (userData: User, historyToPush?: ListeningEntry[]) => {
     try {
       const res = await fetch(`${API_URL}/api/auth/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          ...userData,
+          history: historyToPush || listeningHistory
+        }),
       });
       const data = await res.json();
-      if (data.success) return data.user;
+      if (data.success && data.user) {
+        // Return the server version (which has the merged history)
+        return data.user;
+      }
     } catch (e) {
       console.warn('Backend sync failed, using local session');
     }
@@ -113,18 +119,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const restoreSession = async () => {
     try {
+      setIsLoading(true);
       const session = await AsyncStorage.getItem(SESSION_KEY);
       if (session) {
         const localUser = JSON.parse(session);
         setUser(localUser);
-        // Try to sync/refresh with server
-        syncWithServer(localUser);
         
-        const history = await AsyncStorage.getItem(HISTORY_KEY);
-        if (history) setListeningHistory(JSON.parse(history));
+        // Restore history first from local
+        const historyStr = await AsyncStorage.getItem(HISTORY_KEY);
+        const localHistory = historyStr ? JSON.parse(historyStr) : [];
+        setListeningHistory(localHistory);
+
+        // Then sync/refresh with server to get missing history
+        const finalUser = await syncWithServer(localUser, localHistory);
+        if (finalUser.history) {
+          setListeningHistory(finalUser.history);
+          await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(finalUser.history));
+        }
       }
     } catch (e) {
-      console.warn('Failed to restore session:', e);
+      console.error('CRITICAL: Failed to restore session:', e);
+      // Don't let it crash the app
+      await AsyncStorage.removeItem(SESSION_KEY);
     } finally {
       setIsLoading(false);
     }
@@ -139,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     const finalUser = await syncWithServer(userData);
     setUser(finalUser);
+    if (finalUser.history) setListeningHistory(finalUser.history);
     await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(finalUser));
   };
 
@@ -160,6 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const finalUser = await syncWithServer(userData);
         setUser(finalUser);
+        if (finalUser.history) setListeningHistory(finalUser.history);
         await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(finalUser));
         return true;
       }
@@ -171,9 +189,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    setUser(null);
-    stopHeartbeat();
-    await AsyncStorage.removeItem(SESSION_KEY);
+    try {
+      setUser(null);
+      setListeningHistory([]);
+      stopHeartbeat();
+      await AsyncStorage.removeItem(SESSION_KEY);
+      // No manual router replace here - let AuthGate handle it!
+    } catch (e) {
+      console.error('Logout error', e);
+    }
   };
 
   const getAllUsers = async (): Promise<User[]> => {

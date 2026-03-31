@@ -48,7 +48,7 @@ export default function LibraryScreen() {
             {!listeningHistory || listeningHistory.length === 0 ? (
               <Text style={styles.emptyText}>Songs you play will appear here ✨</Text>
             ) : (
-              listeningHistory.slice(0, 10).map((item, index) => (
+              listeningHistory.slice(0, 20).map((item, index) => (
                 <View key={index} style={styles.historyItem}>
                   <View style={styles.historyIcon}>
                     <Music color="#FFF" size={16} />
@@ -56,6 +56,9 @@ export default function LibraryScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.historyName} numberOfLines={1}>{item.songTitle}</Text>
                     <Text style={styles.historyArtist} numberOfLines={1}>{item.artist}</Text>
+                  </View>
+                  <View style={styles.cloudBadge}>
+                     <Text style={styles.cloudBadgeText}>CLOUD SYNCED</Text>
                   </View>
                 </View>
               ))
@@ -99,4 +102,17 @@ const styles = StyleSheet.create({
   },
   historyName: { color: '#FFF', fontSize: 15, fontWeight: '600' },
   historyArtist: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 2 },
+  cloudBadge: {
+    backgroundColor: 'rgba(144,224,239,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(144,224,239,0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  cloudBadgeText: {
+    color: '#90E0EF',
+    fontSize: 8,
+    fontWeight: '800',
+  },
 });

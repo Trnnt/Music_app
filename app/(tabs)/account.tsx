@@ -14,7 +14,7 @@ export default function AccountScreen() {
 
   const handleLogout = async () => {
     await logout();
-    router.replace('/login');
+    // Logic handled by AuthGate in _layout.tsx
   };
 
   const options = [
@@ -49,20 +49,20 @@ export default function AccountScreen() {
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={[styles.profileHeader, { paddingTop: insets.top + 50 }]}>
-        <View style={styles.avatarContainer}>
+        <TouchableOpacity 
+          style={styles.avatarContainer}
+          onLongPress={() => setShowAdminRow(true)} 
+          delayLongPress={2000}
+          activeOpacity={0.8}
+        >
           {user.avatar ? (
             <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
           ) : (
             <UserIcon color="#FFF" size={40} />
           )}
-        </View>
-        <TouchableOpacity 
-          onLongPress={() => setShowAdminRow(true)} 
-          delayLongPress={3000}
-          activeOpacity={1}
-        >
-          <Text style={styles.profileName}>{user.name}</Text>
         </TouchableOpacity>
+        
+        <Text style={styles.profileName}>{user.name}</Text>
         <Text style={styles.profileEmail}>{user.email}</Text>
         {isAdmin && showAdminRow && (
           <View style={styles.adminBadge}>
