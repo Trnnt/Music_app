@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Users, UserCheck, Activity, Clock, Shield } from 'lucide-react-native';
+import { ChevronLeft, Users, UserCheck, Activity, Clock, Shield, Search } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 
@@ -18,9 +18,17 @@ interface UserItem {
 export default function AdminScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { getAllUsers, user: currentUser } = useAuth();
+  const { getAllUsers, user: currentUser, isAdmin } = useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Protection: Redirect if not admin
+  useEffect(() => {
+    if (!isAdmin) {
+      router.replace('/(tabs)');
+    }
+  }, [isAdmin]);
 
   const loadUsers = useCallback(async () => {
     const allUsers = await getAllUsers();
@@ -42,6 +50,14 @@ export default function AdminScreen() {
     await loadUsers();
     setRefreshing(false);
   };
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(u => 
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.id.includes(searchQuery)
+    );
+  }, [users, searchQuery]);
 
   const now = Date.now();
 
@@ -84,9 +100,11 @@ export default function AdminScreen() {
     return '#555'; // Offline
   };
 
+  if (!isAdmin) return null;
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <LinearGradient colors={['#1a0a2e', '#2d1b4e', '#0a0a0a']} style={styles.headerGradient}>
+      <LinearGradient colors={['#1a0a2e', '#000000']} style={styles.headerGradient}>
         {/* Top bar */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -94,49 +112,65 @@ export default function AdminScreen() {
           </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Shield color="#FFD700" size={20} style={{ marginRight: 8 }} />
-            <Text style={styles.topTitle}>Admin Panel</Text>
+            <Text style={styles.topTitle}>Admin Dashboard</Text>
           </View>
           <View style={{ width: 28 }} />
         </View>
 
         {/* Stats Cards */}
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { borderColor: '#1DB95440' }]}>
-            <Users color="#1DB954" size={22} />
+          <View style={[styles.statCard, { borderLeftColor: '#1DB954', borderLeftWidth: 4 }]}>
+            <Users color="#1DB954" size={20} />
             <Text style={styles.statNumber}>{users.length}</Text>
-            <Text style={styles.statLabel}>Total Users</Text>
+            <Text style={styles.statLabel}>Total Installs</Text>
           </View>
-          <View style={[styles.statCard, { borderColor: '#FFD70040' }]}>
-            <Activity color="#1DB954" size={22} />
-            <Text style={[styles.statNumber, { color: '#1DB954' }]}>{activeNow}</Text>
+          <View style={[styles.statCard, { borderLeftColor: '#FFD700', borderLeftWidth: 4 }]}>
+            <Activity color="#FFD700" size={20} />
+            <Text style={[styles.statNumber, { color: '#FFD700' }]}>{activeNow}</Text>
             <Text style={styles.statLabel}>Online Now</Text>
           </View>
-          <View style={[styles.statCard, { borderColor: '#FF4B6E40' }]}>
-            <UserCheck color="#4B9EFF" size={22} />
-            <Text style={styles.statNumber}>{activeToday}</Text>
+          <View style={[styles.statCard, { borderLeftColor: '#4B9EFF', borderLeftWidth: 4 }]}>
+            <UserCheck color="#4B9EFF" size={20} />
+            <Text style={[styles.statNumber, { color: '#4B9EFF' }]}>{activeToday}</Text>
             <Text style={styles.statLabel}>Active Today</Text>
           </View>
-          <View style={[styles.statCard, { borderColor: '#4B9EFF40' }]}>
-            <Clock color="#FFD700" size={22} />
-            <Text style={styles.statNumber}>{joinedToday}</Text>
+          <View style={[styles.statCard, { borderLeftColor: '#FF4B6E', borderLeftWidth: 4 }]}>
+            <Clock color="#FF4B6E" size={20} />
+            <Text style={[styles.statNumber, { color: '#FF4B6E' }]}>{joinedToday}</Text>
             <Text style={styles.statLabel}>New Today</Text>
           </View>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <Search color="#888" size={20} style={styles.searchIcon} />
+          <TextInput
+            placeholder="Search Name, Email or ID..."
+            placeholderTextColor="#666"
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
       </LinearGradient>
 
       {/* Users List */}
       <View style={styles.listSection}>
-        <Text style={styles.sectionTitle}>ALL REGISTERED USERS</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Text style={styles.sectionTitle}>ALL REGISTERED USERS</Text>
+          <Text style={{ color: '#666', fontSize: 11 }}>Found: {filteredUsers.length}</Text>
+        </View>
+        
         <FlatList
-          data={users}
+          data={filteredUsers}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1DB954" />}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', marginTop: 40 }}>
               <Users color="#444" size={48} />
-              <Text style={{ color: '#888', marginTop: 12 }}>No registered users yet</Text>
+              <Text style={{ color: '#888', marginTop: 12 }}>No users found</Text>
             </View>
           }
           renderItem={({ item }) => {
@@ -157,13 +191,16 @@ export default function AdminScreen() {
 
                 {/* Info */}
                 <View style={styles.userInfo}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Text style={styles.userName}>{item.name}</Text>
-                    {isCurrentUser && (
-                      <View style={styles.youBadge}>
-                        <Text style={styles.youBadgeText}>YOU</Text>
-                      </View>
-                    )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={styles.userName}>{item.name}</Text>
+                      {isCurrentUser && (
+                        <View style={styles.youBadge}>
+                          <Text style={styles.youBadgeText}>YOU</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.userIdText}>UID: {item.id}</Text>
                   </View>
                   <Text style={styles.userEmail}>{item.email}</Text>
                   <View style={{ flexDirection: 'row', marginTop: 4, gap: 12 }}>
@@ -184,50 +221,58 @@ export default function AdminScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
-  headerGradient: { paddingBottom: 20 },
+  headerGradient: { paddingBottom: 24, borderBottomLeftRadius: 30, borderBottomRightRadius: 30, overflow: 'hidden' },
   topBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 12,
   },
   backBtn: { padding: 4 },
-  topTitle: { color: '#FFF', fontSize: 18, fontWeight: '700' },
+  topTitle: { color: '#FFF', fontSize: 20, fontWeight: '800', letterSpacing: 0.5 },
   statsGrid: {
     flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between',
-    paddingHorizontal: 16, marginTop: 8,
+    paddingHorizontal: 16, marginTop: 12,
   },
   statCard: {
-    width: '48%', backgroundColor: 'rgba(255,255,255,0.04)',
+    width: '48%', backgroundColor: 'rgba(255,255,255,0.06)',
     borderRadius: 16, padding: 16, alignItems: 'center', marginBottom: 12,
-    borderWidth: 1,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
   },
-  statNumber: { color: '#FFF', fontSize: 28, fontWeight: '800', marginTop: 8 },
-  statLabel: { color: '#888', fontSize: 11, marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  listSection: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
+  statNumber: { color: '#FFF', fontSize: 24, fontWeight: '900', marginTop: 8 },
+  statLabel: { color: '#888', fontSize: 10, marginTop: 4, textTransform: 'uppercase', letterSpacing: 1, fontWeight: '700' },
+  searchContainer: { 
+    flexDirection: 'row', alignItems: 'center', 
+    backgroundColor: 'rgba(255,255,255,0.08)', 
+    marginHorizontal: 16, marginTop: 8, paddingHorizontal: 16, 
+    height: 48, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+  },
+  searchIcon: { marginRight: 12 },
+  searchInput: { flex: 1, color: '#FFF', fontSize: 15 },
+  listSection: { flex: 1, paddingHorizontal: 16, paddingTop: 20 },
   sectionTitle: {
-    color: '#888', fontSize: 12, fontWeight: '700', letterSpacing: 1.5,
-    marginBottom: 16,
+    color: '#888', fontSize: 12, fontWeight: '800', letterSpacing: 2,
   },
   userRow: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
-    borderBottomWidth: 0.5, borderBottomColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 16,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)',
   },
   avatarContainer: { position: 'relative' },
   avatar: {
-    width: 48, height: 48, borderRadius: 24,
+    width: 52, height: 52, borderRadius: 26,
     justifyContent: 'center', alignItems: 'center',
   },
-  avatarText: { color: '#FFF', fontSize: 20, fontWeight: '800' },
+  avatarText: { color: '#FFF', fontSize: 22, fontWeight: '900' },
   statusDot: {
-    width: 12, height: 12, borderRadius: 6, position: 'absolute',
-    bottom: 0, right: 0, borderWidth: 2, borderColor: '#0a0a0a',
+    width: 14, height: 14, borderRadius: 7, position: 'absolute',
+    bottom: -2, right: -2, borderWidth: 3, borderColor: '#0a0a0a',
   },
-  userInfo: { flex: 1, marginLeft: 14 },
-  userName: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  userEmail: { color: '#888', fontSize: 12, marginTop: 2 },
-  userMeta: { color: '#666', fontSize: 11 },
+  userInfo: { flex: 1, marginLeft: 16 },
+  userName: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  userIdText: { color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: '600' },
+  userEmail: { color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 2 },
+  userMeta: { color: '#555', fontSize: 11, fontWeight: '500' },
   youBadge: {
-    backgroundColor: '#1DB95420', borderRadius: 4, paddingHorizontal: 6, paddingVertical: 2,
-    marginLeft: 8,
+    backgroundColor: 'rgba(29, 185, 84, 0.2)', borderRadius: 6, 
+    paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8,
   },
-  youBadgeText: { color: '#1DB954', fontSize: 10, fontWeight: '800' },
+  youBadgeText: { color: '#1DB954', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
 });

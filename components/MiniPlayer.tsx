@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Play, Pause, SkipForward, X } from 'lucide-react-native';
-import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOutDown, runOnJS } from 'react-native-reanimated';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -11,80 +12,92 @@ import { useImageColors } from '@/hooks/useImageColors';
 import SongArtwork from '@/components/SongArtwork';
 
 function MiniPlayerComponent() {
-  const { currentSong, isPlaying, togglePlayPause, nextSong, position, duration, stopAndClear } = usePlayer();
+  const { currentSong, isPlaying, togglePlayPause, nextSong, prevSong, position, duration, stopAndClear } = usePlayer();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const colors = useImageColors(currentSong?.artwork);
+
+  const gesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .onEnd((e) => {
+      if (e.translationX > 50 || e.velocityX > 300) {
+        runOnJS(nextSong)();
+      } else if (e.translationX < -50 || e.velocityX < -300) {
+        runOnJS(prevSong)();
+      }
+    });
 
   if (!currentSong) return null;
 
   const progressPercent = duration > 0 ? (position / duration) * 100 : 0;
 
   return (
-    <Animated.View
-      entering={FadeInDown}
-      exiting={FadeOutDown}
-      style={[styles.container, { bottom: 50 + insets.bottom }]}
-    >
-      <TouchableOpacity 
-        onPress={() => router.push('/player')} 
-        style={styles.pressable}
-        activeOpacity={0.85}
+    <GestureDetector gesture={gesture}>
+      <Animated.View
+        entering={FadeInDown}
+        exiting={FadeOutDown}
+        style={[styles.container, { bottom: 74 + insets.bottom }]}
       >
-        <View style={styles.blurContainer}>
-          <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
-          {/* Dynamic Tint Overlay */}
-          <View style={[StyleSheet.absoluteFill, { 
-            backgroundColor: colors.background, 
-            opacity: 0.2 // Very subtle atmospheric tint
-          }]} />
-          
-          <View style={styles.content}>
-            <SongArtwork artwork={currentSong.artwork} size={48} borderRadius={8} songTitle={currentSong.title} />
-            <View style={styles.textContainer}>
-              <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
-              <Text style={[styles.artist, { color: colors.primary }]} numberOfLines={1}>
-                {currentSong.artist}
-              </Text>
+        <TouchableOpacity 
+          onPress={() => router.push('/player')} 
+          style={styles.pressable}
+          activeOpacity={0.85}
+        >
+          <View style={styles.blurContainer}>
+            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+            {/* Dynamic Tint Overlay */}
+            <View style={[StyleSheet.absoluteFill, { 
+              backgroundColor: colors.background, 
+              opacity: 0.2 // Very subtle atmospheric tint
+            }]} />
+            
+            <View style={styles.content}>
+              <SongArtwork artwork={currentSong.artwork} size={48} borderRadius={8} songTitle={currentSong.title} />
+              <View style={styles.textContainer}>
+                <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
+                <Text style={[styles.artist, { color: colors.primary }]} numberOfLines={1}>
+                  {currentSong.artist}
+                </Text>
+              </View>
+              <View style={styles.controls}>
+                <TouchableOpacity 
+                  onPress={togglePlayPause} 
+                  style={styles.controlBtn}
+                  activeOpacity={0.6}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  {isPlaying ? (
+                    <Pause color={colors.primary} size={24} fill={colors.primary} />
+                  ) : (
+                    <Play color={colors.primary} size={24} fill={colors.primary} style={{ marginLeft: 2 }} />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={nextSong} 
+                  style={styles.controlBtn}
+                  activeOpacity={0.6}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <SkipForward color={colors.primary} size={24} fill={colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={stopAndClear} 
+                  style={styles.controlBtn}
+                  activeOpacity={0.6}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <X color="rgba(255,255,255,0.6)" size={20} />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.controls}>
-              <TouchableOpacity 
-                onPress={togglePlayPause} 
-                style={styles.controlBtn}
-                activeOpacity={0.6}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                {isPlaying ? (
-                  <Pause color={colors.primary} size={24} fill={colors.primary} />
-                ) : (
-                  <Play color={colors.primary} size={24} fill={colors.primary} style={{ marginLeft: 2 }} />
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={nextSong} 
-                style={styles.controlBtn}
-                activeOpacity={0.6}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <SkipForward color={colors.primary} size={24} fill={colors.primary} />
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={stopAndClear} 
-                style={styles.controlBtn}
-                activeOpacity={0.6}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <X color="rgba(255,255,255,0.6)" size={20} />
-              </TouchableOpacity>
-            </View>
+            <View style={[styles.miniProgress, { 
+              width: `${progressPercent}%`, 
+              backgroundColor: colors.primary 
+            }]} />
           </View>
-          <View style={[styles.miniProgress, { 
-            width: `${progressPercent}%`, 
-            backgroundColor: colors.primary 
-          }]} />
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
+    </GestureDetector>
   );
 }
 

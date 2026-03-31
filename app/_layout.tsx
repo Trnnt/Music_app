@@ -47,6 +47,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -55,34 +57,36 @@ export default function RootLayout() {
       SystemUI.setBackgroundColorAsync('#000000');
       NavigationBar.setVisibilityAsync('hidden');
       NavigationBar.setBehaviorAsync('overlay-swipe');
-        NavigationBar.setBackgroundColorAsync('#000000');
+      NavigationBar.setBackgroundColorAsync('#000000');
     } catch (e) {
       console.warn('Navigation Bar error', e);
     }
   }, []);
 
   return (
-    <ThemeProvider value={DarkTheme}>
-      <AuthProvider>
-        <PlayerProvider>
-          <AuthGate>
-            <Stack>
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="player" options={{ 
-                presentation: 'fullScreenModal', 
-                animation: 'slide_from_bottom',
-                contentStyle: { backgroundColor: '#0a0a0a' },
-                headerShown: false 
-              }} />
-              <Stack.Screen name="profile" options={{ presentation: 'modal', headerShown: false }} />
-              <Stack.Screen name="admin" options={{ presentation: 'modal', headerShown: false }} />
-            </Stack>
-          </AuthGate>
-          <StatusBar style="auto" />
-        </PlayerProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={DarkTheme}>
+        <AuthProvider>
+          <PlayerProvider>
+            <AuthGate>
+              <Stack>
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="player" options={{ 
+                  presentation: 'fullScreenModal', 
+                  animation: 'slide_from_bottom',
+                  contentStyle: { backgroundColor: '#0a0a0a' },
+                  headerShown: false 
+                }} />
+                <Stack.Screen name="profile" options={{ presentation: 'modal', headerShown: false }} />
+                <Stack.Screen name="admin" options={{ presentation: 'modal', headerShown: false }} />
+              </Stack>
+            </AuthGate>
+            <StatusBar style="auto" />
+          </PlayerProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

@@ -2,39 +2,32 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { View } from 'react-native';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { CustomTabBar } from '@/components/CustomTabBar';
 import MiniPlayer from '@/components/MiniPlayer';
 
 export default function TabLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
-          tabBarActiveTintColor: '#1DB954',
-          tabBarInactiveTintColor: '#555',
           headerShown: false,
-          tabBarButton: HapticTab,
-          tabBarStyle: {
-            backgroundColor: '#0a0a0a',
-            borderTopColor: 'rgba(255,255,255,0.05)',
-            borderTopWidth: 0.5,
-            height: 56,
-            paddingBottom: 6,
-          },
         }}>
         <Tabs.Screen
           name="index"
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ color }) => <IconSymbol size={26} name="house.fill" color={color} />,
-          }}
+          options={{ title: 'Home' }}
         />
         <Tabs.Screen
           name="explore"
-          options={{
-            href: null, // Hides the Explore tab completely
-          }}
+          options={{ title: 'Explore' }}
+        />
+        <Tabs.Screen
+          name="library"
+          options={{ title: 'Library' }}
+        />
+        <Tabs.Screen
+          name="account"
+          options={{ title: 'Account' }}
         />
       </Tabs>
       <MiniPlayer />

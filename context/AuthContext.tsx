@@ -30,6 +30,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   logListening: (songTitle: string, artist: string, artwork: string, durationMs: number) => void;
   getAllUsers: () => Promise<User[]>;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -251,9 +252,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const totalListeningMs = listeningHistory.reduce((sum, e) => sum + e.durationMs, 0);
 
+  const isAdmin = user?.email === 'nishantkumar@gmail.com' || user?.email === 'nishant@admin.com';
+
   return (
     <AuthContext.Provider value={{
-      user, isLoading, listeningHistory, totalListeningMs,
+      user, isLoading, listeningHistory, totalListeningMs, isAdmin,
       quickLogin, login, signup, loginWithGoogle, logout, logListening, getAllUsers,
     }}>
       {children}
