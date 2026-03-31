@@ -52,8 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false);
   const heartbeatTimer = useRef<any>(null);
 
-  // 📡 API Base URL (Change to your public server IP for friends)
-  const API_URL = 'http://192.168.1.100:3000'; 
+  // 📡 Global Cloud API Configuration
+  const API_URL = 'https://music-app-sscw.onrender.com'; 
   const ADMIN_SECRET = 'nishant_rimuru_master_2026';
 
   useEffect(() => {
