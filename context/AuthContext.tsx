@@ -24,12 +24,10 @@ interface AuthContextType {
   listeningHistory: ListeningEntry[];
   totalListeningMs: number;
   quickLogin: (name: string) => Promise<void>;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
   loginWithGoogle: (accessToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  logListening: (songTitle: string, artist: string, artwork: string, durationMs: number) => void;
   getAllUsers: () => Promise<User[]>;
+  getGlobalStats: () => Promise<any>;
   isAdmin: boolean;
 }
 
@@ -51,52 +49,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [listeningHistory, setListeningHistory] = useState<ListeningEntry[]>([]);
   const activityInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const heartbeatTimer = useRef<any>(null);
+
+  // 📡 API Base URL (Change to your public server IP for friends)
+  const API_URL = 'http://192.168.1.100:3000'; 
+  const ADMIN_SECRET = 'nishant_rimuru_master_2026';
+
   useEffect(() => {
     restoreSession();
     return () => {
-      if (activityInterval.current) clearInterval(activityInterval.current);
+      if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
     };
   }, []);
 
-  // Update lastActive every 60 seconds while logged in
   useEffect(() => {
     if (user) {
-      updateLastActive();
-      activityInterval.current = setInterval(updateLastActive, 60000);
+      startHeartbeat();
+      setIsAdmin(user.email === 'nishantkumar@gmail.com' || user.email === 'nishant@admin.com');
     } else {
-      if (activityInterval.current) clearInterval(activityInterval.current);
+      stopHeartbeat();
+      setIsAdmin(false);
     }
-    return () => {
-      if (activityInterval.current) clearInterval(activityInterval.current);
-    };
-  }, [user?.id]);
+  }, [user?.email]);
 
-  const updateLastActive = async () => {
+  const startHeartbeat = () => {
+    stopHeartbeat();
+    sendHeartbeat(); // Immediate
+    heartbeatTimer.current = setInterval(sendHeartbeat, 60000); // Every 1 minute for better accuracy
+  };
+
+  const stopHeartbeat = () => {
+    if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
+  };
+
+  const sendHeartbeat = async () => {
     if (!user) return;
     try {
-      const now = new Date().toISOString();
-      const updatedUser = { ...user, lastActive: now };
-      setUser(updatedUser);
-      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
-
-      // Also update in the users registry
-      const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-      const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-      const idx = users.findIndex(u => u.id === user.id);
-      if (idx >= 0) {
-        users[idx] = { ...users[idx], lastActive: now };
-        await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-      }
+      await fetch(`${API_URL}/api/auth/heartbeat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
     } catch (e) {
-      console.warn('Failed to update lastActive:', e);
+      console.log('Heartbeat sync failed');
     }
+  };
+
+  const syncWithServer = async (userData: User) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json();
+      if (data.success) return data.user;
+    } catch (e) {
+      console.warn('Backend sync failed, using local session');
+    }
+    return userData;
   };
 
   const restoreSession = async () => {
     try {
       const session = await AsyncStorage.getItem(SESSION_KEY);
       if (session) {
-        setUser(JSON.parse(session));
+        const localUser = JSON.parse(session);
+        setUser(localUser);
+        // Try to sync/refresh with server
+        syncWithServer(localUser);
+        
         const history = await AsyncStorage.getItem(HISTORY_KEY);
         if (history) setListeningHistory(JSON.parse(history));
       }
@@ -107,86 +130,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ⚡ Quick login: just type your name and sign in!
   const quickLogin = async (name: string) => {
     const userData: User = {
       id: Date.now().toString(),
       name: name.trim(),
       email: `${name.trim().toLowerCase().replace(/\s+/g, '.')}@user.local`,
       createdAt: new Date().toISOString(),
-      lastActive: new Date().toISOString(),
     };
-
-    // Register in users list
-    const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-    const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-    users.push(userData);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-    // Set session
-    setUser(userData);
-    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(userData));
-    const history = await AsyncStorage.getItem(HISTORY_KEY);
-    if (history) setListeningHistory(JSON.parse(history));
-  };
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-      const users: any[] = usersRaw ? JSON.parse(usersRaw) : [];
-      const found = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
-      
-      if (found) {
-        const { password: _, ...userData } = found;
-        userData.lastActive = new Date().toISOString();
-        setUser(userData);
-        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(userData));
-        const history = await AsyncStorage.getItem(HISTORY_KEY);
-        if (history) setListeningHistory(JSON.parse(history));
-        return true;
-      }
-      return false;
-    } catch (e) {
-      console.warn('Login error:', e);
-      return false;
-    }
-  };
-
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    try {
-      const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-      const users: any[] = usersRaw ? JSON.parse(usersRaw) : [];
-      
-      if (users.find(u => u.email?.toLowerCase() === email.toLowerCase())) {
-        return false;
-      }
-
-      const newUser = {
-        id: Date.now().toString(),
-        name,
-        email,
-        password,
-        createdAt: new Date().toISOString(),
-        lastActive: new Date().toISOString(),
-      };
-
-      users.push(newUser);
-      await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-      const { password: _, ...userData } = newUser;
-      setUser(userData);
-      await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(userData));
-      return true;
-    } catch (e) {
-      console.warn('Signup error:', e);
-      return false;
-    }
-  };
-
-  const logout = async () => {
-    if (user) await updateLastActive();
-    setUser(null);
-    await AsyncStorage.removeItem(SESSION_KEY);
+    const finalUser = await syncWithServer(userData);
+    setUser(finalUser);
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(finalUser));
   };
 
   const loginWithGoogle = async (accessToken: string): Promise<boolean> => {
@@ -203,21 +156,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: googleUser.email,
           avatar: googleUser.picture,
           createdAt: new Date().toISOString(),
-          lastActive: new Date().toISOString(),
         };
 
-        // Register in users list
-        const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-        const users: User[] = usersRaw ? JSON.parse(usersRaw) : [];
-        if (!users.find(u => u.email === userData.email)) {
-          users.push(userData);
-          await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-        }
-
-        setUser(userData);
-        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(userData));
-        const history = await AsyncStorage.getItem(HISTORY_KEY);
-        if (history) setListeningHistory(JSON.parse(history));
+        const finalUser = await syncWithServer(userData);
+        setUser(finalUser);
+        await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(finalUser));
         return true;
       }
       return false;
@@ -227,37 +170,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logListening = async (songTitle: string, artist: string, artwork: string, durationMs: number) => {
-    const entry: ListeningEntry = {
-      songTitle, artist, artwork,
-      timestamp: new Date().toISOString(),
-      durationMs,
-    };
-    const updated = [entry, ...listeningHistory].slice(0, 100);
-    setListeningHistory(updated);
-    await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+  const logout = async () => {
+    setUser(null);
+    stopHeartbeat();
+    await AsyncStorage.removeItem(SESSION_KEY);
   };
 
-  // Admin: get all registered users
   const getAllUsers = async (): Promise<User[]> => {
     try {
-      const usersRaw = await AsyncStorage.getItem(USERS_KEY);
-      const users: any[] = usersRaw ? JSON.parse(usersRaw) : [];
-      // Strip passwords before returning
-      return users.map(({ password, ...u }: any) => u as User);
+      const res = await fetch(`${API_URL}/api/admin/users`, {
+        headers: { 'x-admin-secret': ADMIN_SECRET },
+      });
+      return await res.json();
     } catch (e) {
       return [];
     }
   };
 
-  const totalListeningMs = listeningHistory.reduce((sum, e) => sum + e.durationMs, 0);
+  // 👑 Admin helper for the Dashboard stats
+  const getGlobalStats = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/stats`, {
+        headers: { 'x-admin-secret': ADMIN_SECRET },
+      });
+      return await res.json();
+    } catch (e) {
+      return null;
+    }
+  };
 
-  const isAdmin = user?.email === 'nishantkumar@gmail.com' || user?.email === 'nishant@admin.com';
+  const totalListeningMs = listeningHistory.reduce((sum, e) => sum + e.durationMs, 0);
 
   return (
     <AuthContext.Provider value={{
       user, isLoading, listeningHistory, totalListeningMs, isAdmin,
-      quickLogin, login, signup, loginWithGoogle, logout, logListening, getAllUsers,
+      quickLogin, loginWithGoogle, logout, getAllUsers, getGlobalStats,
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { User as UserIcon, Settings, CreditCard, Shield, LogOut, ChevronRight } from 'lucide-react-native';
@@ -9,6 +10,7 @@ export default function AccountScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, isAdmin, logout } = useAuth();
+  const [showAdminRow, setShowAdminRow] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -20,8 +22,8 @@ export default function AccountScreen() {
     { icon: CreditCard, title: 'Subscription', subtitle: 'Manage your plan', onPress: () => {} },
   ];
 
-  // Only add Admin Panel for the Master Admin
-  if (isAdmin) {
+  // The Phantom Door: Reveal admin link only after long press
+  if (isAdmin && showAdminRow) {
     options.unshift({ 
       icon: Shield, 
       title: 'Admin Console', 
@@ -54,11 +56,17 @@ export default function AccountScreen() {
             <UserIcon color="#FFF" size={40} />
           )}
         </View>
-        <Text style={styles.profileName}>{user.name}</Text>
+        <TouchableOpacity 
+          onLongPress={() => setShowAdminRow(true)} 
+          delayLongPress={3000}
+          activeOpacity={1}
+        >
+          <Text style={styles.profileName}>{user.name}</Text>
+        </TouchableOpacity>
         <Text style={styles.profileEmail}>{user.email}</Text>
-        {isAdmin && (
+        {isAdmin && showAdminRow && (
           <View style={styles.adminBadge}>
-            <Text style={styles.adminBadgeText}>MASTER ADMIN</Text>
+            <Text style={styles.adminBadgeText}>MASTER ADMIN ACCESS GRANTED</Text>
           </View>
         )}
       </View>

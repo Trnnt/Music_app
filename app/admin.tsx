@@ -18,8 +18,9 @@ interface UserItem {
 export default function AdminScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { getAllUsers, user: currentUser, isAdmin } = useAuth();
+  const { getAllUsers, getGlobalStats, user: currentUser, isAdmin } = useAuth();
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [stats, setStats] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -30,24 +31,23 @@ export default function AdminScreen() {
     }
   }, [isAdmin]);
 
-  const loadUsers = useCallback(async () => {
-    const allUsers = await getAllUsers();
-    // Sort by most recently active first
-    allUsers.sort((a, b) => {
-      const aTime = a.lastActive ? new Date(a.lastActive).getTime() : 0;
-      const bTime = b.lastActive ? new Date(b.lastActive).getTime() : 0;
-      return bTime - aTime;
-    });
+  const loadData = useCallback(async () => {
+    const [allUsers, globalStats] = await Promise.all([
+      getAllUsers(),
+      getGlobalStats()
+    ]);
+    
     setUsers(allUsers);
-  }, [getAllUsers]);
+    setStats(globalStats);
+  }, [getAllUsers, getGlobalStats]);
 
   useEffect(() => {
-    loadUsers();
+    loadData();
   }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadUsers();
+    await loadData();
     setRefreshing(false);
   };
 
@@ -60,25 +60,6 @@ export default function AdminScreen() {
   }, [users, searchQuery]);
 
   const now = Date.now();
-
-  // Active in last 5 minutes
-  const activeNow = users.filter(u => {
-    if (!u.lastActive) return false;
-    return (now - new Date(u.lastActive).getTime()) < 5 * 60 * 1000;
-  }).length;
-
-  // Active in last 24 hours
-  const activeToday = users.filter(u => {
-    if (!u.lastActive) return false;
-    return (now - new Date(u.lastActive).getTime()) < 24 * 60 * 60 * 1000;
-  }).length;
-
-  // Joined today
-  const joinedToday = users.filter(u => {
-    const created = new Date(u.createdAt);
-    const today = new Date();
-    return created.toDateString() === today.toDateString();
-  }).length;
 
   const formatTimeAgo = (dateStr?: string) => {
     if (!dateStr) return 'Never';
@@ -121,22 +102,22 @@ export default function AdminScreen() {
         <View style={styles.statsGrid}>
           <View style={[styles.statCard, { borderLeftColor: '#1DB954', borderLeftWidth: 4 }]}>
             <Users color="#1DB954" size={20} />
-            <Text style={styles.statNumber}>{users.length}</Text>
-            <Text style={styles.statLabel}>Total Installs</Text>
+            <Text style={styles.statNumber}>{stats?.totalUsers || 0}</Text>
+            <Text style={styles.statLabel}>Total Global Users</Text>
           </View>
           <View style={[styles.statCard, { borderLeftColor: '#FFD700', borderLeftWidth: 4 }]}>
             <Activity color="#FFD700" size={20} />
-            <Text style={[styles.statNumber, { color: '#FFD700' }]}>{activeNow}</Text>
+            <Text style={[styles.statNumber, { color: '#FFD700' }]}>{stats?.onlineNow || 0}</Text>
             <Text style={styles.statLabel}>Online Now</Text>
           </View>
           <View style={[styles.statCard, { borderLeftColor: '#4B9EFF', borderLeftWidth: 4 }]}>
             <UserCheck color="#4B9EFF" size={20} />
-            <Text style={[styles.statNumber, { color: '#4B9EFF' }]}>{activeToday}</Text>
+            <Text style={[styles.statNumber, { color: '#4B9EFF' }]}>{stats?.activeToday || 0}</Text>
             <Text style={styles.statLabel}>Active Today</Text>
           </View>
           <View style={[styles.statCard, { borderLeftColor: '#FF4B6E', borderLeftWidth: 4 }]}>
             <Clock color="#FF4B6E" size={20} />
-            <Text style={[styles.statNumber, { color: '#FF4B6E' }]}>{joinedToday}</Text>
+            <Text style={[styles.statNumber, { color: '#FF4B6E' }]}>{stats?.joinedToday || 0}</Text>
             <Text style={styles.statLabel}>New Today</Text>
           </View>
         </View>
