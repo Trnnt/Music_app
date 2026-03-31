@@ -1,50 +1,56 @@
-# Welcome to your Expo app 👋
+# 💎 Rimuru Music: The Premium Experience 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Welcome to **Rimuru Music**, a high-performance, professionally branded mobile music player built with Expo and React Native. This project combines a cinematic aesthetic with powerful local and online music management.
 
-## Get started
+## 🚀 Download & Experience
 
-1. Install dependencies
+You can download the latest **Rimuru Music Pro** build for Android directly from the link below:
 
+> [!IMPORTANT]
+> **[Download Rimuru Music (Android APK)](https://expo.dev/accounts/rimuru-nish/projects/My_personal_app/builds/6e8cd438-db15-442f-a8cb-21b557625d44)**
+> *(Scan the QR code on the page or click 'Download' to get the APK file)*
+
+---
+
+## ✨ Premium Features
+
+### 1. Stealth Sync (YouTube Ready)
+- **Problem**: Finding newly downloaded songs (from YouTube/External apps) used to require a restart.
+- **Solution**: Just **swipe down** on your library list. The stealth sync re-scans your phone instantly.
+
+### 2. Minimalist "Rimuru" Sorting
+- **Sliders Icon**: Tucked away in the glassmorphic header is a sleek sorting icon.
+- **Modes**: Switch between **Title (A-Z)** and **Recently Added** (Newest first) without cluttered text buttons.
+
+### 3. HD Store-Ready Artwork 🖼️
+- **Integrated System**: Uses `expo-image` for high-performance caching.
+- **Accuracy**: Automatically fetches original high-resolution posters for all online searches (iTunes/Store).
+- **Branding**: Displays the custom Rimuru logo as a premium fallback for local files.
+
+### 4. Professional Security
+- **Hardened Build**: Protected with **R8/ProGuard** code obfuscation for store-ready security.
+
+---
+
+## 🛠️ Get Started (Developers)
+
+1. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. **Start the app (Local)**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. **Building for Production**
+   ```bash
+   eas build --platform android --profile production
+   ```
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 💎 Join the Rimuru Journey
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Rimuru Music is designed for lovers of high-quality audio and cinematic UI. Feel free to explore the code, contribute, and enjoy the ultimate music experience! 🍹
