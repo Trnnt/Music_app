@@ -16,6 +16,18 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB Master Database'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
+// 🏛️ HQ Command Center Greeting
+app.get('/', (req, res) => {
+  res.send(`
+    <div style="background: #000; color: #FFF; font-family: sans-serif; height: 100vh; display: flex; flex-direction: column; justify-content: center; alignItems: center; text-align: center;">
+      <h1 style="color: #1DB954; font-size: 3rem; margin-bottom: 0;">RIMURU MASTER BACKEND</h1>
+      <p style="color: #888; font-size: 1.2rem; margin-top: 10px;">HQ Command Center is LIVE 🏹🛡️🏙️✨</p>
+      <div style="margin-top: 30px; padding: 15px 30px; border: 1px solid #333; border-radius: 50px; color: #555; font-size: 0.9rem; letter-spacing: 2px;">GLOBAL SYNCHRONIZATION ACTIVE 🛰️</div>
+      <p style="margin-top: 50px; color: #333; font-size: 0.8rem;">&copy; 2026 Rimuru Music Ecosystem</p>
+    </div>
+  `);
+});
+
 // 👤 User Schema
 const userSchema = new mongoose.Schema({
   id: { type: String, unique: true, required: true },
