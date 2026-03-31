@@ -1,34 +1,57 @@
-# 💎 Rimuru Music: The Premium Experience 👋
+# 💎 Rimuru Music: The Elite Experience 👋
 
-Welcome to **Rimuru Music**, a high-performance, professionally branded mobile music player built with Expo and React Native. This project combines a cinematic aesthetic with powerful local and online music management.
+<p align="center">
+  <img src="assets/showcase/banner.png" width="100%" alt="Rimuru Music Banner">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Trnnt/Music_app/releases"><img src="https://img.shields.io/github/v/release/Trnnt/Music_app?style=for-the-badge&color=00B4D8" alt="Release"></a>
+  <a href="https://github.com/Trnnt/Music_app/releases"><img src="https://img.shields.io/github/downloads/Trnnt/Music_app/total?style=for-the-badge&color=48CAE4" alt="Downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Trnnt/Music_app?style=for-the-badge&color=90E0EF" alt="License"></a>
+</p>
+
+---
 
 ## 🚀 Download & Experience
 
-You can download the latest **Rimuru Music Pro** build for Android directly from our official and safe GitHub Release:
+Rimuru Music is a high-performance, professionally branded mobile music player built with Expo and React Native. It combines a cinematic "Vibrant" aesthetic with powerful local and online music management.
+
+<p align="center">
+  <a href="https://github.com/Trnnt/Music_app/releases/download/v1.0.0/application-eb52a6ec-076d-45af-9518-829ff4d3de95.zip">
+    <img src="https://raw.githubusercontent.com/Trnnt/Music_app/main/assets/showcase/gh_btn.png" height="50" alt="Get it on GitHub">
+  </a>
+  <a href="https://github.com/Trnnt/Music_app/releases">
+    <img src="https://raw.githubusercontent.com/Trnnt/Music_app/main/assets/showcase/fd_btn.png" height="50" alt="Get it on F-Droid">
+  </a>
+</p>
 
 > [!TIP]
-> **[Download Rimuru Music (Android Release ZIP)](https://github.com/Trnnt/Music_app/releases/download/v1.0.0/application-eb52a6ec-076d-45af-9518-829ff4d3de95.zip)**
-> *(After downloading, simply extract the APK and install it on your device!)*
+> **Recommended**: Download the [Official Release ZIP](https://github.com/Trnnt/Music_app/releases/download/v1.0.0/application-eb52a6ec-076d-45af-9518-829ff4d3de95.zip), extract the APK, and install it on your Android device!
+
+---
+
+## 🎨 Screenshots Showcase
+
+<p align="center">
+  <img src="assets/showcase/screenshots.png" width="100%" alt="Rimuru Music Screenshots">
+</p>
 
 ---
 
 ## ✨ Premium Features
 
-### 1. Stealth Sync (YouTube Ready)
-- **Problem**: Finding newly downloaded songs (from YouTube/External apps) used to require a restart.
-- **Solution**: Just **swipe down** on your library list. The stealth sync re-scans your phone instantly.
+### 🌈 1. Vibrant Theme Engine
+- **Living UI**: The player background and accent colors adapt dynamically to the dominant tones of your current song's artwork.
+- **Artwork Aura**: A luminous shadow effect that "bleeds" colors onto the screen for a cinematic feel.
 
-### 2. Minimalist "Rimuru" Sorting
-- **Sliders Icon**: Tucked away in the glassmorphic header is a sleek sorting icon.
-- **Modes**: Switch between **Title (A-Z)** and **Recently Added** (Newest first) without cluttered text buttons.
+### 🔄 2. Stealth Sync (Pull-to-Refresh)
+- **Instant scan**: Finding newly downloaded songs (YouTube, etc.) used to require a restart. Now, just **swipe down** on your library for an instant background re-scan.
 
-### 3. HD Store-Ready Artwork 🖼️
-- **Integrated System**: Uses `expo-image` for high-performance caching.
-- **Accuracy**: Automatically fetches original high-resolution posters for all online searches (iTunes/Store).
-- **Branding**: Displays the custom Rimuru logo as a premium fallback for local files.
+### 💎 3. Minimalist sorting
+- **Sliders Icon**: Tucked away in the glassmorphic header is a sleek sorting icon. Toggle between **Title (A-Z)** and **Recently Added** with zero UI clutter.
 
-### 4. Professional Security
-- **Hardened Build**: Protected with **R8/ProGuard** code obfuscation for store-ready security.
+### 🖼️ 4. HD Store-Ready Artwork
+- **Integrated System**: Uses `expo-image` for high-performance caching. Automatically fetches original high-res posters from online stores.
 
 ---
 
@@ -44,12 +67,14 @@ You can download the latest **Rimuru Music Pro** build for Android directly from
    npx expo start
    ```
 
-3. **Building for Production**
-   ```bash
-   eas build --platform android --profile production
-   ```
-
 ---
+
+## 🤖 F-Droid Hosting (Roadmap)
+
+To get Rimuru Music onto the official F-Droid store, we follow these steps:
+1. **Metadata**: Prepare the `fastlane` metadata in the repo.
+2. **Submission**: Open a Merge Request on the [F-Droid Data repo](https://gitlab.com/fdroid/fdroiddata).
+3. **Build**: Ensure the build is fully FOSS-compliant (which we have done with our current architecture).
 
 ## 💎 Join the Rimuru Journey
 

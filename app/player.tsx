@@ -278,11 +278,11 @@ export default function PlayerScreen() {
     >
       <AnimatedLinearGradient
         colors={[
-          colors.primary, 
-          '#0a0a0a', 
+          colors.background, 
+          colors.secondary, 
           '#000000'
         ]}
-        locations={[0, 0.6, 1]}
+        locations={[0, 0.4, 0.9]}
         style={[StyleSheet.absoluteFill, animatedGradientStyle]}
       />
 
@@ -375,7 +375,12 @@ export default function PlayerScreen() {
             <RNAnimated.View 
               style={[styles.artworkContainer, { 
                 width: artworkSize, height: artworkSize, borderRadius: artworkSize / 2,
-                transform: [{ translateX: artworkX }] 
+                transform: [{ translateX: artworkX }],
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 20 },
+                shadowOpacity: 0.5,
+                shadowRadius: 30,
+                elevation: 20,
               }]} 
             >
               <Animated.View style={[{width: '100%', height: '100%'}, animatedArtworkStyle]}>

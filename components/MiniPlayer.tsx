@@ -33,13 +33,17 @@ function MiniPlayerComponent() {
       >
         <View style={styles.blurContainer}>
           <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background === '#121212' ? 'transparent' : `${colors.background}40` }]} />
+          {/* Dynamic Tint Overlay */}
+          <View style={[StyleSheet.absoluteFill, { 
+            backgroundColor: colors.background, 
+            opacity: 0.2 // Very subtle atmospheric tint
+          }]} />
           
           <View style={styles.content}>
             <SongArtwork artwork={currentSong.artwork} size={48} borderRadius={8} songTitle={currentSong.title} />
             <View style={styles.textContainer}>
               <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
-              <Text style={[styles.artist, { color: colors.detail !== '#1DB954' ? colors.detail : 'rgba(255,255,255,0.7)' }]} numberOfLines={1}>
+              <Text style={[styles.artist, { color: colors.primary }]} numberOfLines={1}>
                 {currentSong.artist}
               </Text>
             </View>
@@ -51,9 +55,9 @@ function MiniPlayerComponent() {
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 {isPlaying ? (
-                  <Pause color={colors.primary !== '#FFFFFF' ? colors.primary : '#FFF'} size={24} fill={colors.primary !== '#FFFFFF' ? colors.primary : '#FFF'} />
+                  <Pause color={colors.primary} size={24} fill={colors.primary} />
                 ) : (
-                  <Play color={colors.primary !== '#FFFFFF' ? colors.primary : '#FFF'} size={24} fill={colors.primary !== '#FFFFFF' ? colors.primary : '#FFF'} style={{ marginLeft: 2 }} />
+                  <Play color={colors.primary} size={24} fill={colors.primary} style={{ marginLeft: 2 }} />
                 )}
               </TouchableOpacity>
               <TouchableOpacity 
@@ -62,7 +66,7 @@ function MiniPlayerComponent() {
                 activeOpacity={0.6}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
-                <SkipForward color={colors.primary !== '#FFFFFF' ? colors.primary : '#FFF'} size={24} fill={colors.primary !== '#FFFFFF' ? colors.primary : '#FFF'} />
+                <SkipForward color={colors.primary} size={24} fill={colors.primary} />
               </TouchableOpacity>
               <TouchableOpacity 
                 onPress={stopAndClear} 
@@ -74,7 +78,10 @@ function MiniPlayerComponent() {
               </TouchableOpacity>
             </View>
           </View>
-          <View style={[styles.miniProgress, { width: `${progressPercent}%`, backgroundColor: colors.primary !== '#FFFFFF' ? colors.primary : '#1DB954' }]} />
+          <View style={[styles.miniProgress, { 
+            width: `${progressPercent}%`, 
+            backgroundColor: colors.primary 
+          }]} />
         </View>
       </TouchableOpacity>
     </Animated.View>
