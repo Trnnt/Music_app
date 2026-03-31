@@ -8,7 +8,10 @@ interface User {
   avatar?: string;
   createdAt: string;
   lastActive?: string;
+  library?: Song[];
 }
+
+import { Song } from '@/constants/data';
 
 interface ListeningEntry {
   songTitle: string;
@@ -28,6 +31,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   getAllUsers: () => Promise<User[]>;
   getGlobalStats: () => Promise<any>;
+  syncWithServer: (userData: User, historyToPush?: ListeningEntry[], libraryToPush?: Song[]) => Promise<User>;
   isAdmin: boolean;
 }
 
@@ -42,6 +46,7 @@ export const useAuth = () => {
 const USERS_KEY = '@registered_users';
 const SESSION_KEY = '@current_session';
 const HISTORY_KEY = '@listening_history';
+const DOWNLOADED_METADATA_KEY = '@downloaded_metadata';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -96,19 +101,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const syncWithServer = async (userData: User, historyToPush?: ListeningEntry[]) => {
+  const syncWithServer = async (userData: User, historyToPush?: ListeningEntry[], libraryToPush?: Song[]) => {
     try {
       const res = await fetch(`${API_URL}/api/auth/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...userData,
-          history: historyToPush || listeningHistory
+          history: historyToPush || listeningHistory,
+          library: libraryToPush
         }),
       });
       const data = await res.json();
       if (data.success && data.user) {
-        // Return the server version (which has the merged history)
         return data.user;
       }
     } catch (e) {
@@ -125,21 +130,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const localUser = JSON.parse(session);
         setUser(localUser);
         
-        // Restore history first from local
+        // Restore history
         const historyStr = await AsyncStorage.getItem(HISTORY_KEY);
         const localHistory = historyStr ? JSON.parse(historyStr) : [];
         setListeningHistory(localHistory);
 
-        // Then sync/refresh with server to get missing history
-        const finalUser = await syncWithServer(localUser, localHistory);
+        // Restore local library metadata
+        const libraryStr = await AsyncStorage.getItem(DOWNLOADED_METADATA_KEY);
+        const localLibrary = libraryStr ? JSON.parse(libraryStr) : [];
+
+        // Sync with server to get missing history/library
+        const finalUser = await syncWithServer(localUser, localHistory, localLibrary);
         if (finalUser.history) {
           setListeningHistory(finalUser.history);
           await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(finalUser.history));
         }
+        if (finalUser.library) {
+          await AsyncStorage.setItem(DOWNLOADED_METADATA_KEY, JSON.stringify(finalUser.library));
+        }
       }
     } catch (e) {
       console.error('CRITICAL: Failed to restore session:', e);
-      // Don't let it crash the app
       await AsyncStorage.removeItem(SESSION_KEY);
     } finally {
       setIsLoading(false);
@@ -229,6 +240,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{
       user, isLoading, listeningHistory, totalListeningMs, isAdmin,
       quickLogin, loginWithGoogle, logout, getAllUsers, getGlobalStats,
+      syncWithServer
     }}>
       {children}
     </AuthContext.Provider>

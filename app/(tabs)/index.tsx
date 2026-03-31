@@ -42,6 +42,12 @@ const SongItem = memo(({
       <View style={styles.songInfo}>
         <Text style={[styles.title, isPlayingThis && styles.activeText]} numberOfLines={1}>{item.title}</Text>
         <Text style={styles.artist} numberOfLines={1}>{item.artist}</Text>
+        {item.uri?.startsWith('http') && (
+           <View style={styles.cloudBadgeSmall}>
+              <Music color="#1DB954" size={8} />
+              <Text style={styles.cloudBadgeTextSmall}>CLOUD READY</Text>
+           </View>
+        )}
       </View>
       <TouchableOpacity onPress={onToggleFavorite} style={styles.heartBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
         <Heart 
@@ -201,7 +207,20 @@ export default function LibraryScreen() {
     return () => clearTimeout(delayDebounceFn);
   }, [onlineQuery]);
 
-  const allSongs = useMemo(() => [...songs, ...downloadedSongs.filter(ds => !songs.find(s => s.id === ds.id))], [songs, downloadedSongs]);
+  const allSongs = useMemo(() => {
+    // Merge local library + online downloads + cloud backup
+    const local = [...songs];
+    const online = [...downloadedSongs];
+    const cloud = user?.library || [];
+
+    // Create a master list, prioritizing local/downloaded versions
+    const masterMap = new Map<string, Song>();
+    cloud.forEach(s => masterMap.set(s.id, s));
+    online.forEach(s => masterMap.set(s.id, s));
+    local.forEach(s => masterMap.set(s.id, s));
+
+    return Array.from(masterMap.values());
+  }, [songs, downloadedSongs, user?.library]);
 
   const processedSongs = useMemo(() => {
     let list = [...allSongs];
@@ -778,7 +797,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#FFF',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  cloudBadgeSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  cloudBadgeTextSmall: {
+    color: '#1DB954',
+    fontSize: 9,
+    fontWeight: '700',
+    marginLeft: 4,
   },
   activeText: {
     color: '#1DB954',

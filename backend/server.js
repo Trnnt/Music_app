@@ -43,6 +43,14 @@ const userSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now },
     durationMs: Number,
   }],
+  library: [{
+    id: String,
+    title: String,
+    artist: String,
+    artwork: String,
+    uri: String, // Original download URI for restoration
+    duration: Number
+  }],
 });
 
 const User = mongoose.model('User', userSchema);
@@ -54,7 +62,7 @@ const User = mongoose.model('User', userSchema);
 // Register or Sync User (Global Login)
 app.post('/api/auth/sync', async (req, res) => {
   try {
-    const { id, name, email, avatar, history } = req.body;
+    const { id, name, email, avatar, history, library } = req.body;
     if (!email) return res.status(400).json({ error: 'Email required' });
 
     let user = await User.findOne({ email: email.toLowerCase() });
@@ -68,9 +76,14 @@ app.post('/api/auth/sync', async (req, res) => {
       if (history && Array.isArray(history)) {
         const existingTitles = new Set(user.history.map(h => h.songTitle));
         const newEntries = history.filter(h => !existingTitles.has(h.songTitle));
-        if (newEntries.length > 0) {
-          user.history.push(...newEntries);
-        }
+        if (newEntries.length > 0) user.history.push(...newEntries);
+      }
+
+      // Merge library metadata (the 158 songs)
+      if (library && Array.isArray(library)) {
+        const existingIds = new Set(user.library.map(l => l.id));
+        const newLibraryEntries = library.filter(l => !existingIds.has(l.id));
+        if (newLibraryEntries.length > 0) user.library.push(...newLibraryEntries);
       }
       
       await user.save();
@@ -80,7 +93,8 @@ app.post('/api/auth/sync', async (req, res) => {
         name,
         email: email.toLowerCase(),
         avatar,
-        history: history || []
+        history: history || [],
+        library: library || []
       });
       await user.save();
     }

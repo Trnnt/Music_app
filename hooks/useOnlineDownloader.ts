@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Song } from '@/constants/data';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
 
 const DOWNLOAD_DIR = FileSystem.documentDirectory + 'downloads/';
 const DOWNLOADED_METADATA_KEY = '@downloaded_metadata';
@@ -9,6 +10,8 @@ const DOWNLOADED_METADATA_KEY = '@downloaded_metadata';
 export function useOnlineDownloader() {
   const [searchResults, setSearchResults] = useState<Song[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
+  const { syncWithServer, user } = useAuth();
   
   const [downloadedSongs, setDownloadedSongs] = useState<Song[]>([]);
   const [isDownloading, setIsDownloading] = useState<Record<string, boolean>>({});
@@ -79,7 +82,6 @@ export function useOnlineDownloader() {
 
       const fileUri = DOWNLOAD_DIR + `${song.id}.mp3`;
 
-      // Use createDownloadResumable for progress tracking
       const downloadResumable = FileSystem.createDownloadResumable(
         song.uri,
         fileUri,
@@ -102,6 +104,11 @@ export function useOnlineDownloader() {
       setDownloadedSongs(updatedList);
       await AsyncStorage.setItem(DOWNLOADED_METADATA_KEY, JSON.stringify(updatedList));
 
+      // 🛰️ Cloud Auto-Backup
+      if (user) {
+        await syncWithServer(user, undefined, updatedList);
+      }
+
     } catch (e) {
       console.error('Failed to download track:', e);
     } finally {
@@ -122,6 +129,11 @@ export function useOnlineDownloader() {
       const updatedList = downloadedSongs.filter(s => s.id !== songId);
       setDownloadedSongs(updatedList);
       await AsyncStorage.setItem(DOWNLOADED_METADATA_KEY, JSON.stringify(updatedList));
+
+      // 🛰️ Cloud Sync Removal
+      if (user) {
+        await syncWithServer(user, undefined, updatedList);
+      }
       
     } catch(e) {
        console.error('Failed to remove track', e);
