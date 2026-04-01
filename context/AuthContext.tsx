@@ -27,6 +27,8 @@ interface AuthContextType {
   listeningHistory: ListeningEntry[];
   totalListeningMs: number;
   quickLogin: (name: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<boolean>;
+  signup: (name: string, email: string, pass: string) => Promise<boolean>;
   loginWithGoogle: (accessToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
   getAllUsers: () => Promise<User[]>;
@@ -199,6 +201,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const login = async (email: string, pass: string): Promise<boolean> => {
+    const userData: User = {
+      id: Date.now().toString(),
+      name: email.split('@')[0],
+      email: email.trim().toLowerCase(),
+      createdAt: new Date().toISOString(),
+    };
+    const finalUser = await syncWithServer(userData);
+    setUser(finalUser);
+    if (finalUser.history) setListeningHistory(finalUser.history);
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(finalUser));
+    return true;
+  };
+
+  const signup = async (name: string, email: string, pass: string): Promise<boolean> => {
+    const userData: User = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      createdAt: new Date().toISOString(),
+    };
+    const finalUser = await syncWithServer(userData);
+    setUser(finalUser);
+    if (finalUser.history) setListeningHistory(finalUser.history);
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(finalUser));
+    return true;
+  };
+
   const logout = async () => {
     try {
       setUser(null);
@@ -239,7 +269,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{
       user, isLoading, listeningHistory, totalListeningMs, isAdmin,
-      quickLogin, loginWithGoogle, logout, getAllUsers, getGlobalStats,
+      quickLogin, login, signup, loginWithGoogle, logout, getAllUsers, getGlobalStats,
       syncWithServer
     }}>
       {children}

@@ -31,8 +31,14 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = async () => {
-    await logout();
-    router.replace('/login');
+    try {
+      // First, get off this screen to prevent rendering with null user
+      router.replace('/login');
+      // Then, clear the session data
+      await logout();
+    } catch (e) {
+      console.error('Logout error:', e);
+    }
   };
 
   return (

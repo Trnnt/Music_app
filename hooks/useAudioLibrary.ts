@@ -48,20 +48,12 @@ function extractFolderName(uri: string): string {
 
 function isLikelyMusicFile(filename: string, uri: string, durationSecs: number): boolean {
   const lowerFilename = filename.toLowerCase();
-  const lowerUri = uri.toLowerCase();
   
-  // Check extension
+  // High-visibility extension check
   const hasValidExt = MUSIC_EXTENSIONS.some(ext => lowerFilename.endsWith(ext));
   if (!hasValidExt) return false;
   
-  // Exclude only very short snippets (< 5 seconds)
-  if (durationSecs > 0 && durationSecs < 5) return false;
-  
-  // Minimal exclusion for voice notes only
-  for (const dir of EXCLUDED_DIRS) {
-    if (lowerUri.includes(dir)) return false;
-  }
-  
+  // No more duration or folder restrictions. Find everything!
   return true;
 }
 

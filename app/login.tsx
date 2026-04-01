@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Music, Mail, Lock, User, Eye, EyeOff, Zap } from 'lucide-react-native';
 import * as Google from 'expo-auth-session/providers/google';
@@ -8,6 +8,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const RIMURU_LOGO = require('@/assets/images/rimuru.png');
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -106,13 +108,11 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           
           {/* Logo */}
-          <View style={styles.logoContainer}>
-            <LinearGradient colors={['#1DB954', '#17a34a']} style={styles.logoCircle}>
-              <Music color="#FFF" size={40} />
-            </LinearGradient>
-            <Text style={styles.appName}>Rimuru Music</Text>
-            <Text style={styles.tagline}>Your personal music experience</Text>
-          </View>
+            <View style={styles.logoContainer}>
+              <Image source={RIMURU_LOGO} style={styles.logoImage} />
+              <Text style={styles.appName}>Rimuru Music</Text>
+              <Text style={styles.tagline}>Your personal music experience</Text>
+            </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
@@ -229,8 +229,8 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
   logoContainer: { alignItems: 'center', marginBottom: 40 },
-  logoCircle: {
-    width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center',
+  logoImage: {
+    width: 100, height: 100, borderRadius: 20,
     elevation: 10, shadowColor: '#1DB954', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12,
   },
   appName: { color: '#FFF', fontSize: 32, fontWeight: '800', marginTop: 16, letterSpacing: -0.5 },
