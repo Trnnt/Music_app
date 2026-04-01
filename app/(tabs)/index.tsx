@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator, RefreshControl, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
@@ -17,6 +17,8 @@ import { Song } from '@/constants/data';
 
 type SortOrder = 'TITLE' | 'DATE_ADDED';
 type TabName = 'Songs' | 'Artists' | 'Albums' | 'Online' | 'Downloads' | 'Favorites';
+
+const RIMURU_LOGO = require('@/assets/images/rimuru.png');
 
 // ===== MEMOIZED SONG ITEM =====
 const SongItem = memo(({ 
@@ -588,7 +590,10 @@ export default function LibraryScreen() {
             </View>
           ) : (
             <>
-              <Text style={styles.headerTitle}>Rimuru Music</Text>
+              <View style={styles.logoHeader}>
+                <Image source={RIMURU_LOGO} style={styles.logoIcon} />
+                <Text style={styles.headerTitle}>Rimuru Music</Text>
+              </View>
               <View style={styles.headerActions}>
                 <TouchableOpacity style={styles.iconBtn} onPress={() => setIsSortSheetOpen(true)} activeOpacity={0.6}>
                   <Sliders color="#FFF" size={20} />
@@ -688,10 +693,20 @@ const styles = StyleSheet.create({
     minHeight: 64,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: '800',
     color: '#FFF',
     letterSpacing: -0.5,
+    marginLeft: 10,
+  },
+  logoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
   },
   searchBarContainer: {
     flex: 1,
