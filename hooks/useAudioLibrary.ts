@@ -3,14 +3,10 @@ import * as MediaLibrary from 'expo-media-library';
 import Constants from 'expo-constants';
 import { Song } from '@/constants/data';
 
-// Directories that typically contain recordings/non-music audio
+// Directories that typically contain recordings/non-music audio (Reduced for maximum visibility)
 const EXCLUDED_DIRS = [
-  'recordings', 'recording', 'call', 'calls', 
-  'whatsapp', 'telegram', 'voice recorder', 'voicerecorder',
-  'dcim', 'camera', 'ringtones', 'ringtone', 'notifications',
-  'alarms', 'alarm', 'sound_recorder', 'soundrecorder',
-  'voice', 'voicenotes', 'voice notes', 'screencapture',
-  'screen_recordings', 'screenrecordings',
+  'whatsapp/media/whatsapp voice notes',
+  'telegram/telegram audio',
 ];
 
 // Music file extensions we want
@@ -58,12 +54,12 @@ function isLikelyMusicFile(filename: string, uri: string, durationSecs: number):
   const hasValidExt = MUSIC_EXTENSIONS.some(ext => lowerFilename.endsWith(ext));
   if (!hasValidExt) return false;
   
-  // Exclude very short files (< 30 seconds) — likely recordings/notifications
-  if (durationSecs > 0 && durationSecs < 30) return false;
+  // Exclude only very short snippets (< 5 seconds)
+  if (durationSecs > 0 && durationSecs < 5) return false;
   
-  // Exclude files from known non-music directories
+  // Minimal exclusion for voice notes only
   for (const dir of EXCLUDED_DIRS) {
-    if (lowerUri.includes(`/${dir}/`)) return false;
+    if (lowerUri.includes(dir)) return false;
   }
   
   return true;
