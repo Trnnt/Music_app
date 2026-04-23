@@ -35,14 +35,16 @@ jobs:
       - name: Force Kotlin 1.9.24
         run: |
           echo "kotlinVersion=1.9.24" >> android/gradle.properties
-          # Also try to replace in build.gradle just in case
-          sed -i 's/kotlinVersion = .*/kotlinVersion = "1.9.24"/' android/build.gradle || true
+          echo "kotlin.version=1.9.24" >> android/gradle.properties
+          echo "suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
+          # Global replacement in all gradle files
+          find android -type f -name "*.gradle" -exec sed -i 's/1.9.25/1.9.24/g' {} +
 
       - name: Build APK (Assemble Release)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease -PkotlinVersion=1.9.24
+          ./gradlew assembleRelease -PkotlinVersion=1.9.24 -PsuppressKotlinVersionCompatibilityCheck=true
         env:
           NODE_ENV: production
 
