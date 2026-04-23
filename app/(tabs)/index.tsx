@@ -18,7 +18,7 @@ import { Song } from '@/constants/data';
 type SortOrder = 'TITLE' | 'DATE_ADDED';
 type TabName = 'Songs' | 'Artists' | 'Albums' | 'Online' | 'Downloads' | 'Favorites';
 
-const RIMURU_LOGO = require('@/assets/images/rimuru.png');
+const RIMURU_LOGO = require('../../assets/images/rimuru.jpg');
 
 // ===== MEMOIZED SONG ITEM =====
 const SongItem = memo(({ 

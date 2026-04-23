@@ -35,7 +35,7 @@ function isLocalArtwork(artwork: string): boolean {
   return false;
 }
 
-const CUSTOM_COVER = require('@/assets/images/rimuru.jpg');
+const CUSTOM_COVER = require('../assets/images/rimuru.jpg');
 
 function SongArtworkComponent({ artwork, size = 56, borderRadius = 12, songTitle = 'Song' }: SongArtworkProps) {
   const isRemote = artwork && artwork.startsWith('http');

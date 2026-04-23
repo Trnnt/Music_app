@@ -28,7 +28,7 @@ function isLocalArtwork(artwork: string): boolean {
   return false;
 }
 
-const CUSTOM_COVER = require('@/assets/images/rimuru.jpg');
+const CUSTOM_COVER = require('../assets/images/rimuru.jpg');
 
 const PlayerArtwork = memo(({ artwork, size }: { artwork: string; songTitle: string; size: number }) => {
   const isRemote = artwork && artwork.startsWith('http');

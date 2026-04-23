@@ -9,7 +9,7 @@ import { useRouter } from 'expo-router';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const RIMURU_LOGO = require('@/assets/images/rimuru.png');
+const RIMURU_LOGO = require('../assets/images/rimuru.jpg');
 
 export default function LoginScreen() {
   const router = useRouter();

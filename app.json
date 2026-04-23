@@ -4,7 +4,7 @@
     "slug": "My_personal_app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "assets/images/rimuru.png",
+    "icon": "assets/images/icon.png",
     "scheme": "mypersonalapp",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#000000",
@@ -20,15 +20,9 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "assets/images/rimuru.png",
+        "foregroundImage": "assets/images/icon.png",
         "backgroundColor": "#000000"
       },
-      "permissions": [
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_AUDIO",
-        "android.permission.READ_MEDIA_IMAGES"
-      ],
       "package": "com.rimuru.musicplayer"
     },
     "web": {
@@ -41,15 +35,25 @@
         "expo-media-library",
         {
           "photosPermission": "Allow Rimuru Music to access your media.",
-          "savePhotosPermission": "Allow Rimuru Music to save media."
+          "savePhotosPermission": "Allow Rimuru Music to save media.",
+          "isAccessMediaLocationEnabled": true
         }
       ],
       [
         "expo-splash-screen",
         {
-          "image": "assets/images/rimuru.png",
-          "resizeMode": "cover",
+        "image": "assets/images/splash.png",
+          "resizeMode": "contain",
           "backgroundColor": "#000000"
+        }
+      ],
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.24"
+          }
         }
       ]
     ],
