@@ -60,6 +60,7 @@
     "experiments": {
       "typedRoutes": true
     },
+    "newArchEnabled": false,
     "extra": {
       "router": {},
       "eas": {
