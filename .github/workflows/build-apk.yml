@@ -32,19 +32,19 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Force Kotlin 1.9.24
+      - name: Force Kotlin 1.9.25
         run: |
-          echo "kotlinVersion=1.9.24" >> android/gradle.properties
-          echo "kotlin.version=1.9.24" >> android/gradle.properties
+          echo "android.kotlinVersion=1.9.25" >> android/gradle.properties
+          echo "kotlinVersion=1.9.25" >> android/gradle.properties
           echo "suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
           # Global replacement in all gradle files
-          find android -type f -name "*.gradle" -exec sed -i 's/1.9.25/1.9.24/g' {} +
+          find android -type f -name "*.gradle" -exec sed -i 's/1.9.24/1.9.25/g' {} +
 
       - name: Build APK (Assemble Release)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease -PkotlinVersion=1.9.24 -PsuppressKotlinVersionCompatibilityCheck=true
+          ./gradlew assembleRelease -Pandroid.kotlinVersion=1.9.25 -PkotlinVersion=1.9.25 -PsuppressKotlinVersionCompatibilityCheck=true
         env:
           NODE_ENV: production
 
