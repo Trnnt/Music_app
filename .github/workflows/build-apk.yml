@@ -29,12 +29,20 @@ jobs:
 
       - name: Prebuild Android (Generate native code)
         run: npx expo prebuild --platform android --clean
+        env:
+          NODE_ENV: production
+
+      - name: Force Kotlin 1.9.24
+        run: |
+          sed -i 's/kotlinVersion = .*/kotlinVersion = "1.9.24"/' android/build.gradle
 
       - name: Build APK (Assemble Release)
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
+        env:
+          NODE_ENV: production
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
