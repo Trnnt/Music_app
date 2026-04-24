@@ -48,6 +48,19 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Build v${{ github.run_number }}
+          body: |
+            Automated build for Rimuru Music.
+            Version: ${{ github.run_number }}
+            Commit: ${{ github.sha }}
+          files: android/app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         if: success()
