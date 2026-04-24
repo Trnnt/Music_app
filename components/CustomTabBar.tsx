@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Animated, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { GlassView } from './ui/GlassView';
 
 const { width } = Dimensions.get('window');
-const TAB_BAR_WIDTH_PERCENT = 0.95; // Slightly narrower than screen for premium look
+const TAB_BAR_WIDTH_PERCENT = 0.9;
 const TAB_BAR_WIDTH = width * TAB_BAR_WIDTH_PERCENT;
 const TAB_WIDTH = TAB_BAR_WIDTH / 4;
 
@@ -18,15 +19,14 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     Animated.spring(translateX, {
       toValue: state.index * TAB_WIDTH,
       useNativeDriver: true,
-      tension: 100,
-      friction: 12,
+      tension: 80,
+      friction: 10,
     }).start();
   }, [state.index]);
 
   return (
-    <View style={[styles.wrapper, { bottom: insets.bottom + 4 }]}>
-      <View style={styles.container}>
-        {/* Active Indicator Line */}
+    <View style={[styles.wrapper, { bottom: insets.bottom + 10 }]}>
+      <GlassView intensity={60} style={styles.container}>
         <Animated.View 
           style={[
             styles.indicator, 
@@ -58,7 +58,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               ? options.title
               : route.name;
 
-          // Mapping icons to your symbols
           const getIcon = (name: string) => {
             switch (name) {
               case 'index': return 'house.fill';
@@ -77,19 +76,19 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
             >
               <IconSymbol 
                 name={getIcon(route.name) as any} 
-                size={24} 
-                color={isFocused ? '#00B4D8' : 'rgba(255,255,255,0.4)'} 
+                size={22} 
+                color={isFocused ? '#1DB954' : 'rgba(255,255,255,0.3)'} 
               />
               <Text style={[
                 styles.label, 
-                { color: isFocused ? '#00B4D8' : 'rgba(255,255,255,0.4)' }
+                { color: isFocused ? '#1DB954' : 'rgba(255,255,255,0.3)' }
               ]}>
                 {label as string}
               </Text>
             </Pressable>
           );
         })}
-      </View>
+      </GlassView>
     </View>
   );
 }
@@ -104,24 +103,18 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 64,
-    backgroundColor: '#0a0a0a',
-    borderRadius: 24,
+    borderRadius: 32,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
+    borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
   },
   indicator: {
     position: 'absolute',
-    top: 0,
-    left: (TAB_WIDTH - 40) / 2,
-    width: 40,
+    bottom: 8,
+    left: (TAB_WIDTH - 20) / 2,
+    width: 20,
     height: 3,
-    backgroundColor: '#00B4D8',
+    backgroundColor: '#1DB954',
     borderRadius: 2,
     zIndex: 10,
   },
@@ -131,8 +124,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '800',
     marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
+

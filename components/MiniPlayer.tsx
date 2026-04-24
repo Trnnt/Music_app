@@ -3,19 +3,19 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Play, Pause, SkipForward, X } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeOutDown, runOnJS } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { usePlayer } from '@/context/PlayerContext';
 import { useImageColors } from '@/hooks/useImageColors';
 import SongArtwork from '@/components/SongArtwork';
+import { GlassView } from './ui/GlassView';
 
 function MiniPlayerComponent() {
   const { currentSong, isPlaying, togglePlayPause, nextSong, prevSong, position, duration, stopAndClear } = usePlayer();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const colors = useImageColors(currentSong?.artwork);
+  const colors = useImageColors(currentSong?.artwork, currentSong?.id);
 
   const gesture = Gesture.Pan()
     .activeOffsetX([-20, 20])
@@ -34,25 +34,24 @@ function MiniPlayerComponent() {
   return (
     <GestureDetector gesture={gesture}>
       <Animated.View
-        entering={FadeInDown}
+        entering={FadeInDown.springify().damping(20).stiffness(150)}
         exiting={FadeOutDown}
-        style={[styles.container, { bottom: 74 + insets.bottom }]}
+        style={[styles.container, { bottom: 84 + insets.bottom }]}
       >
         <TouchableOpacity 
           onPress={() => router.push('/player')} 
           style={styles.pressable}
-          activeOpacity={0.85}
+          activeOpacity={0.9}
         >
-          <View style={styles.blurContainer}>
-            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+          <GlassView intensity={60} style={styles.glass}>
             {/* Dynamic Tint Overlay */}
             <View style={[StyleSheet.absoluteFill, { 
               backgroundColor: colors.background, 
-              opacity: 0.2 // Very subtle atmospheric tint
+              opacity: 0.3
             }]} />
             
             <View style={styles.content}>
-              <SongArtwork artwork={currentSong.artwork} size={48} borderRadius={8} songTitle={currentSong.title} />
+              <SongArtwork artwork={currentSong.artwork} size={44} borderRadius={8} songTitle={currentSong.title} />
               <View style={styles.textContainer}>
                 <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
                 <Text style={[styles.artist, { color: colors.primary }]} numberOfLines={1}>
@@ -64,7 +63,6 @@ function MiniPlayerComponent() {
                   onPress={togglePlayPause} 
                   style={styles.controlBtn}
                   activeOpacity={0.6}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   {isPlaying ? (
                     <Pause color={colors.primary} size={24} fill={colors.primary} />
@@ -75,26 +73,26 @@ function MiniPlayerComponent() {
                 <TouchableOpacity 
                   onPress={nextSong} 
                   style={styles.controlBtn}
-                  activeOpacity={0.6}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <SkipForward color={colors.primary} size={24} fill={colors.primary} />
+                  <SkipForward color="#FFF" size={24} fill="#FFF" />
                 </TouchableOpacity>
                 <TouchableOpacity 
                   onPress={stopAndClear} 
-                  style={styles.controlBtn}
-                  activeOpacity={0.6}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={[styles.controlBtn, {marginLeft: 4}]}
                 >
-                  <X color="rgba(255,255,255,0.6)" size={20} />
+                  <X color="rgba(255,255,255,0.4)" size={20} />
                 </TouchableOpacity>
               </View>
             </View>
-            <View style={[styles.miniProgress, { 
-              width: `${progressPercent}%`, 
-              backgroundColor: colors.primary 
-            }]} />
-          </View>
+            
+            {/* Progress Bar */}
+            <View style={styles.progressBackground}>
+              <View style={[styles.progressFill, { 
+                width: `${progressPercent}%`, 
+                backgroundColor: colors.primary 
+              }]} />
+            </View>
+          </GlassView>
         </TouchableOpacity>
       </Animated.View>
     </GestureDetector>
@@ -107,31 +105,27 @@ export default MiniPlayer;
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 8,
-    right: 8,
+    left: 12,
+    right: 12,
     height: 64,
-    borderRadius: 12,
-    overflow: 'hidden',
+    elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
   },
   pressable: {
     flex: 1,
   },
-  blurContainer: {
+  glass: {
     flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(50, 50, 50, 0.4)',
+    borderRadius: 16,
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
   },
   textContainer: {
     flex: 1,
@@ -141,27 +135,33 @@ const styles = StyleSheet.create({
   title: {
     color: '#FFF',
     fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontWeight: 'bold',
   },
   artist: {
-    color: 'rgba(255,255,255,0.7)',
     fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
   },
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   controlBtn: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  miniProgress: {
+  progressBackground: {
     position: 'absolute',
     bottom: 0,
     left: 0,
+    right: 0,
     height: 2,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  progressFill: {
+    height: '100%',
   },
 });
+

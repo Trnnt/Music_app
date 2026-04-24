@@ -1,12 +1,14 @@
-import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Modal } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
   useAnimatedStyle, withTiming, withRepeat, Easing, useSharedValue, 
   withSpring, runOnJS 
 } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, ChevronDown, ListMusic, Search, Heart } from 'lucide-react-native';
+import { 
+  Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, 
+  ChevronDown, ListMusic, Heart, Languages, Settings2 
+} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect, useCallback, memo } from 'react';
 import { Image } from 'expo-image';
@@ -16,9 +18,10 @@ import { useImageColors } from '@/hooks/useImageColors';
 import { useFavorites } from '@/hooks/useFavorites';
 import SongArtwork from '@/components/SongArtwork';
 import WaveformProgress from '@/components/WaveformProgress';
+import { PremiumBackground } from '@/components/PremiumBackground';
+import { GlassView } from '@/components/ui/GlassView';
 
 const { width, height } = Dimensions.get('window');
-const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
 function isLocalArtwork(artwork: string): boolean {
   if (!artwork) return true;
@@ -77,19 +80,20 @@ export default function PlayerScreen() {
   const colors = useImageColors(currentSong?.artwork, currentSong?.id);
   const { toggleFavorite, isFavorite } = useFavorites();
   const [showPlaylist, setShowPlaylist] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showLyrics, setShowLyrics] = useState(false);
+  const [showEQ, setShowEQ] = useState(false);
   
   const [sleepMinutes, setSleepMinutes] = useState(0);
   const [sleepTimerId, setSleepTimerId] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [showSleepMenu, setShowSleepMenu] = useState(false);
 
-  const barHeights = Array.from({length: 20}, () => useSharedValue(4));
+  const barHeights = Array.from({length: 24}, () => useSharedValue(4));
   
   useEffect(() => {
     if (isPlaying) {
       const interval = setInterval(() => {
         barHeights.forEach(bar => {
-          bar.value = withTiming(Math.random() * 30 + 4, { duration: 150 });
+          bar.value = withTiming(Math.random() * 40 + 4, { duration: 150 });
         });
       }, 200);
       return () => clearInterval(interval);
@@ -124,10 +128,6 @@ export default function PlayerScreen() {
       runOnJS(router.back)();
     });
   }, [closePlayer, router]);
-
-  const animatedGradientStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(1, { duration: 800 }),
-  }));
 
   const rotation = useSharedValue(0);
   useEffect(() => {
@@ -208,23 +208,14 @@ export default function PlayerScreen() {
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const filteredPlaylist = playlist.filter(s => 
-    s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.artist.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const artworkSize = width - 48;
+  const artworkSize = width - 64;
 
   return (
     <GestureDetector gesture={composedGesture}>
       <Animated.View style={[styles.container, animatedContainerStyle]}>
-        <AnimatedLinearGradient
-          colors={[colors.background, colors.secondary, '#000000']}
-          locations={[0, 0.4, 0.9]}
-          style={[StyleSheet.absoluteFill, animatedGradientStyle]}
-        />
+        <PremiumBackground colors={colors} />
 
-        <View style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <View style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom + 20 }]}>
           <View style={styles.dragHandle} />
           
           <View style={styles.header}>
@@ -239,6 +230,9 @@ export default function PlayerScreen() {
               <TouchableOpacity onPress={() => setShowSleepMenu(!showSleepMenu)} style={[styles.iconBtn, {marginRight: 8}]} activeOpacity={0.6}>
                 <Text style={{fontSize: 18}}>{sleepMinutes > 0 ? '⏰' : '🌙'}</Text>
               </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowEQ(true)} style={[styles.iconBtn, {marginRight: 12}]} activeOpacity={0.6}>
+                <Settings2 color="#FFFFFF" size={24} />
+              </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowPlaylist(!showPlaylist)} style={styles.iconBtn} activeOpacity={0.6}>
                 <ListMusic color={showPlaylist ? colors.primary : "#FFFFFF"} size={28} />
               </TouchableOpacity>
@@ -249,7 +243,7 @@ export default function PlayerScreen() {
             <View style={styles.sleepMenu}>
               {[5, 10, 15, 30, 45, 60, 0].map(mins => (
                 <TouchableOpacity key={mins} style={styles.sleepOption} onPress={() => setSleepTimer(mins)} activeOpacity={0.6}>
-                  <Text style={[styles.sleepOptionText, sleepMinutes === mins && {color: '#1DB954'}]}>
+                  <Text style={[styles.sleepOptionText, sleepMinutes === mins && {color: colors.primary}]}>
                     {mins === 0 ? 'Off' : `${mins} min`}
                   </Text>
                 </TouchableOpacity>
@@ -257,90 +251,117 @@ export default function PlayerScreen() {
             </View>
           )}
 
-          {showPlaylist ? (
-            <View style={{flex: 1, marginTop: 20}}>
-              <Text style={{color:'white', fontSize: 24, fontWeight: 'bold', marginBottom: 16}}>Playlist</Text>
-              <View style={styles.searchBar}>
-                <Search color="gray" size={20} />
-                <TextInput style={styles.searchInput} placeholder="Search playlist..." placeholderTextColor="gray" value={searchQuery} onChangeText={setSearchQuery} />
+          <View style={styles.mainLayout}>
+            {showPlaylist ? (
+              <GlassView style={styles.overlayContainer}>
+                <View style={{padding: 20, flex: 1}}>
+                  <Text style={styles.overlayTitle}>Up Next</Text>
+                  <FlatList
+                    data={playlist}
+                    keyExtractor={(s) => s.id}
+                    renderItem={({item, index}) => (
+                      <TouchableOpacity 
+                        style={styles.playlistItem} 
+                        onPress={() => { setPlaylistAndPlay(playlist, index); setShowPlaylist(false); }}
+                      >
+                        <SongArtwork artwork={item.artwork} size={44} borderRadius={22} songTitle={item.title} />
+                        <View style={{marginLeft: 12, flex: 1}}>
+                          <Text style={[styles.playlistTitle, item.id === currentSong.id && {color: colors.primary}]}>{item.title}</Text>
+                          <Text style={styles.playlistArtist}>{item.artist}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </GlassView>
+            ) : showLyrics ? (
+              <GlassView style={styles.overlayContainer}>
+                <View style={{padding: 20, flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                  <Text style={styles.overlayTitle}>Lyrics</Text>
+                  <Text style={styles.lyricsPlaceholder}>
+                    Searching for lyrics...{"\n"}
+                    This feature will be available soon!
+                  </Text>
+                </View>
+              </GlassView>
+            ) : (
+              <>
+                <Animated.View style={[styles.artworkWrapper, animatedArtworkStyle]}>
+                  <View style={[styles.artworkShadow, { shadowColor: colors.primary }]} />
+                  <PlayerArtwork artwork={currentSong.artwork} songTitle={currentSong.title} size={artworkSize} />
+                </Animated.View>
+
+                <View style={styles.visualizerContainer}>
+                  {barHeights.map((h, i) => (
+                    <Animated.View key={i} style={[styles.visualizerBar, { height: h, backgroundColor: colors.primary, opacity: 0.4 + (i / barHeights.length) * 0.6 }]} />
+                  ))}
+                </View>
+              </>
+            )}
+          </View>
+
+          <GlassView style={styles.controlsGlass} intensity={30}>
+            <View style={styles.songInfo}>
+              <View style={{flex: 1}}>
+                <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
+                <Text style={[styles.artist, { color: colors.detail }]} numberOfLines={1}>{currentSong.artist}</Text>
               </View>
-              <FlatList
-                data={filteredPlaylist}
-                keyExtractor={(s) => s.id}
-                renderItem={({item}) => {
-                  const isPlayingThis = currentSong.id === item.id;
-                  const originalIndex = playlist.findIndex(s => s.id === item.id);
-                  return (
-                    <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', marginBottom: 16}} onPress={() => { setPlaylistAndPlay(playlist, originalIndex); setShowPlaylist(false); }}>
-                      <SongArtwork artwork={item.artwork} size={50} borderRadius={25} songTitle={item.title} />
-                      <View style={{marginLeft: 16, flex: 1}}>
-                        <Text style={{color: isPlayingThis ? colors.primary : 'white', fontWeight: 'bold'}}>{item.title}</Text>
-                        <Text style={{color: 'gray'}}>{item.artist}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  )
-                }}
-              />
+              <TouchableOpacity onPress={() => setShowLyrics(!showLyrics)} style={[styles.iconBtn, {marginLeft: 12}]}>
+                <Languages color={showLyrics ? colors.primary : "rgba(255,255,255,0.6)"} size={24} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => toggleFavorite(currentSong.id)} style={[styles.iconBtn, {marginLeft: 8}]}>
+                <Heart color={isFavorite(currentSong.id) ? '#FF4B6E' : 'rgba(255,255,255,0.5)'} size={26} fill={isFavorite(currentSong.id) ? '#FF4B6E' : 'transparent'} />
+              </TouchableOpacity>
             </View>
-          ) : (
-            <>
-              <Animated.View style={[styles.artworkContainer, { width: artworkSize, height: artworkSize, borderRadius: artworkSize / 2, shadowColor: colors.primary, elevation: 20 }, animatedArtworkStyle]}>
-                <PlayerArtwork artwork={currentSong.artwork} songTitle={currentSong.title} size={artworkSize} />
-              </Animated.View>
 
-              <View style={styles.visualizerContainer}>
-                {barHeights.map((h, i) => (
-                  <Animated.View key={ i} style={[styles.visualizerBar, { height: h, backgroundColor: colors.primary, opacity: 0.6 + (i / barHeights.length) * 0.4 }]} />
-                ))}
+            <View style={styles.progressSection}>
+              <WaveformProgress position={position} duration={duration} onSeek={seekTo} activeColor={colors.primary} />
+              <View style={styles.timeLabels}>
+                <Text style={styles.timeText}>{formatTime(position)}</Text>
+                <Text style={styles.timeText}>{formatTime(duration)}</Text>
               </View>
+            </View>
 
-              {isBuffering && (
-                <View style={styles.bufferingContainer}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={styles.bufferingText}>Buffering...</Text>
-                </View>
-              )}
-
-              <View style={{flex: 1, justifyContent: 'flex-end'}}>
-                <View style={styles.songInfoContainer}>
-                  <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4}}>
-                    <Text style={[styles.title, {flex: 1}]} numberOfLines={1}>{currentSong.title}</Text>
-                    <TouchableOpacity onPress={() => toggleFavorite(currentSong.id)} style={{padding: 8}}>
-                      <Heart color={isFavorite(currentSong.id) ? '#FF4B6E' : 'rgba(255,255,255,0.5)'} size={24} fill={isFavorite(currentSong.id) ? '#FF4B6E' : 'transparent'} />
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={[styles.artist, { color: colors.detail }]} numberOfLines={1}>{currentSong.artist}</Text>
-                </View>
-
-                <View style={styles.progressContainer}>
-                  <WaveformProgress position={position} duration={duration} onSeek={seekTo} activeColor={colors.primary} />
-                  <View style={styles.timeContainer}>
-                    <Text style={[styles.timeText, { color: colors.detail }]}>{formatTime(position)}</Text>
-                    <Text style={[styles.timeText, { color: colors.detail }]}>{formatTime(duration)}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.controlsContainer}>
-                  <TouchableOpacity style={styles.secondaryControlButton} onPress={toggleShuffle}>
-                    <Shuffle color={isShuffle ? colors.primary : "rgba(255,255,255,0.7)"} size={24} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={prevSong} style={styles.controlButton}>
-                    <SkipBack color={colors.primary} size={32} fill={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={togglePlayPause} style={[styles.playButton, { backgroundColor: colors.primary }]}>
-                    {isPlaying ? <Pause color="#000000" size={32} fill="#000000" /> : <Play color="#000000" size={32} fill="#000000" style={{ marginLeft: 4 }} />}
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={nextSong} style={styles.controlButton}>
-                    <SkipForward color={colors.primary} size={32} fill={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.secondaryControlButton} onPress={toggleLoop}>
-                    <Repeat color={isLooping ? colors.primary : "rgba(255,255,255,0.7)"} size={24} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </>
-          )}
+            <View style={styles.mainControls}>
+              <TouchableOpacity onPress={toggleShuffle}>
+                <Shuffle color={isShuffle ? colors.primary : "rgba(255,255,255,0.6)"} size={22} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={prevSong}>
+                <SkipBack color="#FFF" size={36} fill="#FFF" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={togglePlayPause} style={[styles.playBtn, { backgroundColor: colors.primary }]}>
+                {isPlaying ? <Pause color="#000" size={32} fill="#000" /> : <Play color="#000" size={32} fill="#000" style={{marginLeft: 4}} />}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={nextSong}>
+                <SkipForward color="#FFF" size={36} fill="#FFF" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={toggleLoop}>
+                <Repeat color={isLooping ? colors.primary : "rgba(255,255,255,0.6)"} size={22} />
+              </TouchableOpacity>
+            </View>
+          </GlassView>
         </View>
+
+        <Modal visible={showEQ} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <GlassView style={styles.eqModal}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Equalizer</Text>
+                <TouchableOpacity onPress={() => setShowEQ(false)}>
+                  <Text style={{color: colors.primary, fontWeight: 'bold'}}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.eqContent}>
+                <Text style={styles.placeholderText}>Equalizer coming in next update!</Text>
+                <View style={styles.eqMock}>
+                  {[0.8, 0.4, 0.6, 0.9, 0.5].map((h, i) => (
+                    <View key={i} style={[styles.eqBar, {height: 100 * h, backgroundColor: colors.primary}]} />
+                  ))}
+                </View>
+              </View>
+            </GlassView>
+          </View>
+        </Modal>
       </Animated.View>
     </GestureDetector>
   );
@@ -348,30 +369,40 @@ export default function PlayerScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  content: { flex: 1, paddingHorizontal: 24 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16 },
-  iconBtn: { padding: 4 },
-  headerText: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
-  sleepIndicator: { color: '#1DB954', fontSize: 11, fontWeight: '500', marginTop: 2 },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 16 },
-  searchInput: { flex: 1, color: 'white', marginLeft: 12, fontSize: 16 },
-  artworkContainer: { alignSelf: 'center', marginVertical: 20, overflow: 'hidden', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.5, shadowRadius: 30 },
-  songInfoContainer: { marginVertical: 10 },
-  title: { color: '#FFFFFF', fontSize: 28, fontWeight: 'bold' },
-  artist: { color: 'rgba(255,255,255,0.7)', fontSize: 18, fontWeight: '500' },
-  progressContainer: { marginVertical: 20 },
-  timeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  timeText: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontVariant: ['tabular-nums'] },
-  controlsContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 20 },
-  playButton: { width: 72, height: 72, borderRadius: 36, justifyContent: 'center', alignItems: 'center' },
-  controlButton: { padding: 10 },
-  secondaryControlButton: { padding: 10 },
-  dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.3)', alignSelf: 'center', marginTop: 8, marginBottom: 4 },
+  content: { flex: 1, paddingHorizontal: 20 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
+  iconBtn: { padding: 6 },
+  headerText: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 'bold', letterSpacing: 1.5, textTransform: 'uppercase' },
+  dragHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'center', marginTop: 8 },
+  sleepIndicator: { color: '#1DB954', fontSize: 10, fontWeight: 'bold', marginTop: 2 },
   sleepMenu: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: 12, marginHorizontal: 24, marginBottom: 10 },
   sleepOption: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.06)', margin: 4 },
-  sleepOptionText: { color: '#FFF', fontSize: 13, fontWeight: '600' },
-  visualizerContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', height: 36, marginBottom: 8, gap: 2 },
-  visualizerBar: { width: 3, borderRadius: 2, minHeight: 4 },
-  bufferingContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 6 },
-  bufferingText: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginLeft: 8 },
+  mainLayout: { flex: 1, justifyContent: 'center', alignItems: 'center', marginVertical: 10 },
+  artworkWrapper: { width: width - 64, height: width - 64, justifyContent: 'center', alignItems: 'center' },
+  artworkShadow: { ...StyleSheet.absoluteFillObject, borderRadius: (width - 64) / 2, opacity: 0.3, shadowOffset: { width: 0, height: 20 }, shadowOpacity: 1, shadowRadius: 40, elevation: 25 },
+  visualizerContainer: { flexDirection: 'row', height: 40, alignItems: 'flex-end', gap: 3, marginTop: 30 },
+  visualizerBar: { width: 4, borderRadius: 2, minHeight: 4 },
+  controlsGlass: { padding: 20, marginBottom: 10, width: '100%' },
+  songInfo: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  title: { color: '#FFF', fontSize: 24, fontWeight: 'bold' },
+  artist: { fontSize: 16, fontWeight: '500', opacity: 0.8 },
+  progressSection: { marginBottom: 25 },
+  timeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  timeText: { color: 'rgba(255,255,255,0.5)', fontSize: 12, fontVariant: ['tabular-nums'] },
+  mainControls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  playBtn: { width: 70, height: 70, borderRadius: 35, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: {width: 0, height: 4}, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+  overlayContainer: { ...StyleSheet.absoluteFillObject, margin: 10 },
+  overlayTitle: { color: '#FFF', fontSize: 22, fontWeight: 'bold', marginBottom: 20 },
+  playlistItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  playlistTitle: { color: '#FFF', fontSize: 15, fontWeight: '600' },
+  playlistArtist: { color: 'rgba(255,255,255,0.5)', fontSize: 13 },
+  lyricsPlaceholder: { color: 'rgba(255,255,255,0.6)', fontSize: 16, textAlign: 'center', lineHeight: 24 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  eqModal: { height: height * 0.4, borderTopLeftRadius: 30, borderTopRightRadius: 30 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
+  modalTitle: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
+  eqContent: { flex: 1, padding: 30, alignItems: 'center', justifyContent: 'center' },
+  placeholderText: { color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 30 },
+  eqMock: { flexDirection: 'row', alignItems: 'flex-end', gap: 15, height: 100 },
+  eqBar: { width: 20, borderRadius: 10 },
 });
