@@ -27,35 +27,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prebuild Android (Generate native code)
+      - name: Prebuild Android
         run: npx expo prebuild --platform android --clean
         env:
           NODE_ENV: production
-
-      - name: Force Kotlin 1.9.25
-        run: |
-          echo "android.kotlinVersion=1.9.25" >> android/gradle.properties
-          echo "kotlinVersion=1.9.25" >> android/gradle.properties
-          echo "suppressKotlinVersionCompatibilityCheck=true" >> android/gradle.properties
-          # Global replacement in all gradle files
-          find android -type f -name "*.gradle" -exec sed -i 's/1.9.24/1.9.25/g' {} +
 
       - name: Build APK (Assemble Release)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease -Pandroid.kotlinVersion=1.9.25 -PkotlinVersion=1.9.25 -PsuppressKotlinVersionCompatibilityCheck=true
+          ./gradlew assembleRelease -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
         env:
           NODE_ENV: production
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
+        if: success()
         with:
           tag_name: v${{ github.run_number }}
           name: Build v${{ github.run_number }}
           body: |
-            Automated build for Rimuru Music.
-            Version: ${{ github.run_number }}
+            Premium Rimuru Music Build v${{ github.run_number }}
+            ✨ Dynamic Backgrounds
+            ✨ Glassmorphism UI
+            ✨ Cloud Sync Placeholders
+            
             Commit: ${{ github.sha }}
           files: android/app/build/outputs/apk/release/app-release.apk
         env:
@@ -63,7 +59,8 @@ jobs:
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: app-release
           path: android/app/build/outputs/apk/release/app-release.apk
+
