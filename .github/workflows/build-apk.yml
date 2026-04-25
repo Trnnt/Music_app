@@ -36,16 +36,17 @@ jobs:
         run: npx expo export --platform android
         env:
           NODE_ENV: production
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=3072"
 
       - name: Build APK (Assemble Release)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+          ./gradlew assembleRelease --no-daemon --stacktrace -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=512m"
         env:
           NODE_ENV: production
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=2560"
+
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
