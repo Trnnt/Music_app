@@ -11,13 +11,6 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { PlayerProvider } from '@/context/PlayerContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
@@ -26,22 +19,22 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
 
-    const hideSplash = async () => {
+    // Use a small timeout to ensure the router is fully mounted and ready for redirection
+    const timer = setTimeout(() => {
       try {
-        await SplashScreen.hideAsync();
+        const inAuthGroup = segments[0] === 'login';
+
+        if (!user && !inAuthGroup) {
+          router.replace('/login');
+        } else if (user && inAuthGroup) {
+          router.replace('/(tabs)');
+        }
       } catch (e) {
-        console.warn('Splash hide error', e);
+        console.warn('Navigation redirect failed', e);
       }
-    };
-    hideSplash();
+    }, 100);
 
-    const inAuthGroup = segments[0] === 'login';
-
-    if (!user && !inAuthGroup) {
-      router.replace('/login');
-    } else if (user && inAuthGroup) {
-      router.replace('/(tabs)');
-    }
+    return () => clearTimeout(timer);
   }, [user, isLoading, segments]);
 
   return <>{children}</>;

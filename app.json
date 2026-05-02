@@ -23,7 +23,16 @@
         "foregroundImage": "assets/images/icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.rimuru.musicplayer"
+      "package": "com.rimuru.musicplayer",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "ACCESS_MEDIA_LOCATION",
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK"
+      ]
     },
     "web": {
       "output": "static",
@@ -39,6 +48,7 @@
           "isAccessMediaLocationEnabled": true
         }
       ],
+      "expo-av",
       [
         "expo-splash-screen",
         {
@@ -62,6 +72,7 @@
       "typedRoutes": true
     },
     "newArchEnabled": false,
+    "hermesEnabled": false,
     "extra": {
       "router": {},
       "eas": {
