@@ -37,11 +37,11 @@ jobs:
           cd android
           chmod +x gradlew
           ./gradlew clean assembleRelease --no-daemon --stacktrace \
-            -Dorg.gradle.jvmargs="-Xmx2560m -XX:MaxMetaspaceSize=512m" \
-            -Dorg.gradle.workers.max=2
+            -Dorg.gradle.jvmargs="-Xmx3072m -XX:MaxMetaspaceSize=1024m" \
+            -Dorg.gradle.workers.max=1
         env:
           NODE_ENV: production
-          NODE_OPTIONS: "--max-old-space-size=2560"
+          NODE_OPTIONS: "--max-old-space-size=3072"
 
 
       - name: Create Release
