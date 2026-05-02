@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Install dependencies
         run: npm install
@@ -38,7 +38,7 @@ jobs:
           chmod +x gradlew
           ./gradlew clean assembleRelease --no-daemon --stacktrace \
             -Dorg.gradle.jvmargs="-Xmx3072m -XX:MaxMetaspaceSize=1024m" \
-            -Dorg.gradle.workers.max=1
+            -Dorg.gradle.workers.max=2
         env:
           NODE_ENV: production
           NODE_OPTIONS: "--max-old-space-size=3072"
