@@ -53,14 +53,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    try {
-      SystemUI.setBackgroundColorAsync('#000000');
-      NavigationBar.setVisibilityAsync('hidden');
-      NavigationBar.setBehaviorAsync('overlay-swipe');
-      NavigationBar.setBackgroundColorAsync('#000000');
-    } catch (e) {
-      console.warn('Navigation Bar error', e);
-    }
+    // Basic initialization without risky native UI calls
   }, []);
 
   return (
