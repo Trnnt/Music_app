@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { Audio, AVPlaybackStatus } from 'expo-av';
-import { Song } from '@/constants/data';
+import { Song } from '../constants/data';
 
 interface PlayerContextType {
   currentSong: Song | null;

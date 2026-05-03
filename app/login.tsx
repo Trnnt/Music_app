@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Music, Mail, Lock, User, Eye, EyeOff, Zap } from 'lucide-react-native';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'expo-router';
 
 WebBrowser.maybeCompleteAuthSession();

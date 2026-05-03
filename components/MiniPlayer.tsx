@@ -6,11 +6,11 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-import { usePlayer } from '@/context/PlayerContext';
-import { useImageColors } from '@/hooks/useImageColors';
-import SongArtwork from '@/components/SongArtwork';
+import { usePlayer } from '../context/PlayerContext';
+import { useImageColors } from '../hooks/useImageColors';
+import SongArtwork from './SongArtwork';
 import { GlassView } from './ui/GlassView';
-import { Theme } from '@/constants/Theme';
+import { Theme } from '../constants/theme';
 
 function MiniPlayerComponent() {
   const { currentSong, isPlaying, togglePlayPause, nextSong, prevSong, position, duration, stopAndClear } = usePlayer();

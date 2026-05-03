@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Heart } from 'lucide-react-native';
-import { Theme } from '../../constants/Theme';
+import { Theme } from '../../constants/theme';
 import SongArtwork from '../../components/SongArtwork';
 import { Song } from '../../constants/data';
 

@@ -5,9 +5,9 @@ import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { PlayerProvider } from '@/context/PlayerContext';
-import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { useColorScheme } from '../hooks/use-color-scheme';
+import { PlayerProvider } from '../context/PlayerContext';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 function AuthGate({ children }: { children: React.ReactNode }) {

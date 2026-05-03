@@ -20,7 +20,7 @@ import SongArtwork from '../components/SongArtwork';
 import WaveformProgress from '../components/WaveformProgress';
 import { PremiumBackground } from '../components/PremiumBackground';
 import { GlassView } from '../components/ui/GlassView';
-import { Theme } from '../constants/Theme';
+import { Theme } from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');
 const CUSTOM_COVER = require('../assets/images/rimuru.jpg');

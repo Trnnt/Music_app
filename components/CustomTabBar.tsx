@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated, Pressable } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { IconSymbol } from './ui/icon-symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { GlassView } from './ui/GlassView';
-import { Theme } from '@/constants/Theme';
+import { Theme } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 const TAB_BAR_WIDTH = width * 0.92;

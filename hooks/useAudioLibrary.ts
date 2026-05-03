@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as MediaLibrary from 'expo-media-library';
 import Constants from 'expo-constants';
-import { Song } from '@/constants/data';
+import { Song } from '../constants/data';
 
 // Directories that typically contain recordings/non-music audio (Reduced for maximum visibility)
 const EXCLUDED_DIRS = [

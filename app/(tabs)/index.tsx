@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, FlatList, Text, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { Search, Heart, Music, Mic, Disc, Globe, DownloadCloud } from 'lucide-react-native';
-import { Theme } from '../../constants/Theme';
+import { Theme } from '../../constants/theme';
 import { PremiumHeader } from '../../components/design-system/PremiumHeader';
 import { OptimizedSongItem } from '../../components/design-system/OptimizedSongItem';
 import { useAudioLibrary } from '../../hooks/useAudioLibrary';
