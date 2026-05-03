@@ -14,22 +14,30 @@ const MUSIC_EXTENSIONS = ['.mp3', '.m4a', '.flac', '.wav', '.ogg', '.aac', '.wma
 
 // Try to extract artist/title from filename patterns like "Artist - Title" or "Title"
 function parseFilename(filename: string): { title: string; artist: string } {
-  // Remove extension
-  const name = filename.replace(/\.[^/.]+$/, '');
+  // Remove extension and common audio suffixes
+  let name = filename.replace(/\.(mp3|m4a|flac|wav|ogg|aac|wma|opus|mp4a|webm|weba)$/i, '');
+  name = name.replace(/\s*\(?(128k|320k|kbps|youtube|v2|official|video|lyric|audio|hq|hd)\)?/gi, '').trim();
   
   // Common separators: " - ", " _ ", " – "
   const separators = [' - ', ' – ', ' — ', ' _ '];
   for (const sep of separators) {
-    const parts = name.split(sep);
-    if (parts.length >= 2) {
-      return {
-        artist: parts[0].trim(),
-        title: parts.slice(1).join(sep).trim(),
-      };
+    if (name.includes(sep)) {
+      const parts = name.split(sep);
+      if (parts.length >= 2) {
+        return {
+          artist: parts[0].trim() || 'Unknown Artist',
+          title: parts.slice(1).join(sep).trim() || parts[0].trim(),
+        };
+      }
     }
   }
   
-  // No separator found, just use filename as title  
+  // Handle "Title [Artist]" pattern
+  const bracketMatch = name.match(/(.+) \[(.+)\]/);
+  if (bracketMatch) {
+    return { title: bracketMatch[1].trim(), artist: bracketMatch[2].trim() };
+  }
+  
   return { title: name.trim(), artist: 'Unknown Artist' };
 }
 

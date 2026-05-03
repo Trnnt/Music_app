@@ -12,13 +12,20 @@ import { BlurView } from 'expo-blur';
 const { width, height } = Dimensions.get('window');
 
 interface PremiumBackgroundProps {
-  colors: {
+  colors?: {
     background: string;
     primary: string;
     secondary: string;
     detail: string;
   };
 }
+
+const DEFAULT_COLORS = {
+  background: '#0a0a0c',
+  primary: '#1DB954',
+  secondary: '#1f1f28',
+  detail: '#rgba(255,255,255,0.5)',
+};
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -70,7 +77,7 @@ const FloatingBlob = ({ color, size, initialX = 0, initialY = 0 }: {
   );
 };
 
-export const PremiumBackground: React.FC<PremiumBackgroundProps> = ({ colors }) => {
+export const PremiumBackground: React.FC<PremiumBackgroundProps> = ({ colors = DEFAULT_COLORS }) => {
   const bgOpacity = useSharedValue(0);
 
   useEffect(() => {

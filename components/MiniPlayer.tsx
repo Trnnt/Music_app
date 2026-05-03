@@ -10,6 +10,7 @@ import { usePlayer } from '@/context/PlayerContext';
 import { useImageColors } from '@/hooks/useImageColors';
 import SongArtwork from '@/components/SongArtwork';
 import { GlassView } from './ui/GlassView';
+import { Theme } from '@/constants/Theme';
 
 function MiniPlayerComponent() {
   const { currentSong, isPlaying, togglePlayPause, nextSong, prevSong, position, duration, stopAndClear } = usePlayer();
@@ -36,7 +37,10 @@ function MiniPlayerComponent() {
       <Animated.View
         entering={FadeInDown.springify().damping(20).stiffness(150)}
         exiting={FadeOutDown}
-        style={[styles.container, { bottom: 84 + insets.bottom }]}
+        style={[
+          styles.container, 
+          { bottom: Theme.dimensions.tabBarHeight + insets.bottom + Theme.spacing.md }
+        ]}
       >
         <TouchableOpacity 
           onPress={() => router.push('/player')} 
@@ -105,37 +109,41 @@ export default MiniPlayer;
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 12,
-    right: 12,
-    height: 64,
-    elevation: 10,
+    left: Theme.spacing.md,
+    right: Theme.spacing.md,
+    height: Theme.dimensions.miniPlayerHeight,
+    elevation: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    zIndex: 100,
   },
   pressable: {
     flex: 1,
   },
   glass: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: Theme.radius.lg,
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: Theme.spacing.md,
   },
   textContainer: {
     flex: 1,
-    marginLeft: 12,
+    marginLeft: Theme.spacing.md,
     justifyContent: 'center',
   },
   title: {
-    color: '#FFF',
+    color: Theme.colors.text,
     fontSize: 14,
     fontWeight: 'bold',
+    letterSpacing: -0.2,
   },
   artist: {
     fontSize: 12,
@@ -147,10 +155,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   controlBtn: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: Theme.spacing.xs,
   },
   progressBackground: {
     position: 'absolute',
@@ -158,7 +167,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   progressFill: {
     height: '100%',

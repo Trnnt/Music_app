@@ -5,32 +5,37 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { GlassView } from './ui/GlassView';
+import { Theme } from '@/constants/Theme';
 
 const { width } = Dimensions.get('window');
-const TAB_BAR_WIDTH_PERCENT = 0.9;
-const TAB_BAR_WIDTH = width * TAB_BAR_WIDTH_PERCENT;
-const TAB_WIDTH = TAB_BAR_WIDTH / 4;
+const TAB_BAR_WIDTH = width * 0.92;
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const numTabs = state.routes.length;
+  const tabWidth = TAB_BAR_WIDTH / numTabs;
   const translateX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.spring(translateX, {
-      toValue: state.index * TAB_WIDTH,
+      toValue: state.index * tabWidth,
       useNativeDriver: true,
-      tension: 80,
-      friction: 10,
+      tension: 100,
+      friction: 12,
     }).start();
-  }, [state.index]);
+  }, [state.index, tabWidth]);
 
   return (
-    <View style={[styles.wrapper, { bottom: insets.bottom + 10 }]}>
-      <GlassView intensity={60} style={styles.container}>
+    <View style={[styles.wrapper, { bottom: insets.bottom + Theme.spacing.sm }]}>
+      <GlassView intensity={70} style={styles.container}>
         <Animated.View 
           style={[
             styles.indicator, 
-            { transform: [{ translateX }] }
+            { 
+              width: tabWidth * 0.4,
+              left: (tabWidth - (tabWidth * 0.4)) / 2,
+              transform: [{ translateX }] 
+            }
           ]} 
         />
 
@@ -39,7 +44,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           const isFocused = state.index === index;
 
           const onPress = () => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            Haptics.selectionAsync();
             const event = navigation.emit({
               type: 'tabPress',
               target: route.key,
@@ -73,15 +78,16 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               key={route.key}
               onPress={onPress}
               style={styles.tabItem}
+              android_ripple={{ color: 'rgba(29, 185, 84, 0.1)', borderless: true }}
             >
               <IconSymbol 
                 name={getIcon(route.name) as any} 
                 size={22} 
-                color={isFocused ? '#1DB954' : 'rgba(255,255,255,0.3)'} 
+                color={isFocused ? Theme.colors.primary : Theme.colors.textSecondary} 
               />
               <Text style={[
                 styles.label, 
-                { color: isFocused ? '#1DB954' : 'rgba(255,255,255,0.3)' }
+                { color: isFocused ? Theme.colors.primary : Theme.colors.textSecondary }
               ]}>
                 {label as string}
               </Text>
@@ -98,37 +104,36 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: (width - TAB_BAR_WIDTH) / 2,
     width: TAB_BAR_WIDTH,
-    zIndex: 100,
+    zIndex: 1000,
   },
   container: {
     flexDirection: 'row',
-    height: 64,
-    borderRadius: 32,
+    height: Theme.dimensions.tabBarHeight,
+    borderRadius: Theme.radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: Theme.colors.border,
     overflow: 'hidden',
+    backgroundColor: 'rgba(10, 10, 12, 0.8)', // Darker background for legibility
   },
   indicator: {
     position: 'absolute',
-    bottom: 8,
-    left: (TAB_WIDTH - 20) / 2,
-    width: 20,
+    bottom: 10,
     height: 3,
-    backgroundColor: '#1DB954',
-    borderRadius: 2,
+    backgroundColor: Theme.colors.primary,
+    borderRadius: Theme.radius.full,
     zIndex: 10,
   },
   tabItem: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 4,
   },
   label: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     marginTop: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
 });
-
