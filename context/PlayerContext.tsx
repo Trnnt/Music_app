@@ -222,14 +222,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, []);
 
   const togglePlayPause = useCallback(async () => {
-    if (!soundRef.current) return;
-    lastActionTime.current = Date.now();
-    if (isPlaying) {
+    try {
+      if (!soundRef.current) return;
+      lastActionTime.current = Date.now();
+      if (isPlaying) {
+        setIsPlaying(false);
+        await soundRef.current.pauseAsync();
+      } else {
+        setIsPlaying(true);
+        await soundRef.current.playAsync();
+      }
+    } catch (e) {
+      console.warn('Error in togglePlayPause:', e);
       setIsPlaying(false);
-      soundRef.current.pauseAsync().catch(() => {});
-    } else {
-      setIsPlaying(true);
-      soundRef.current.playAsync().catch(() => {});
     }
   }, [isPlaying]);
 

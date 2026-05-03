@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { 
   useAnimatedStyle, withTiming, withRepeat, Easing, useSharedValue, 
@@ -25,11 +25,29 @@ import { Theme } from '../constants/theme';
 const { width, height } = Dimensions.get('window');
 const CUSTOM_COVER = require('../assets/images/rimuru.jpg');
 
-const PlayerArtwork = memo(({ artwork, size }: { artwork: string; size: number }) => {
+const PlayerArtwork = memo(({ artwork, size, isPlaying }: { artwork: string; size: number; isPlaying: boolean }) => {
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    if (isPlaying) {
+      rotation.value = withRepeat(
+        withTiming(360, { duration: 20000, easing: Easing.linear }),
+        -1,
+        false
+      );
+    } else {
+      rotation.value = withTiming(rotation.value); 
+    }
+  }, [isPlaying]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
   const isRemote = artwork && artwork.startsWith('http');
   
   return (
-    <View style={[styles.artworkContainer, { width: size, height: size }]}>
+    <Animated.View style={[styles.artworkContainer, { width: size, height: size }, animatedStyle]}>
       <Image 
         source={isRemote ? { uri: artwork } : CUSTOM_COVER} 
         placeholder={CUSTOM_COVER}
@@ -38,7 +56,7 @@ const PlayerArtwork = memo(({ artwork, size }: { artwork: string; size: number }
         transition={300}
         cachePolicy="disk"
       />
-    </View>
+    </Animated.View>
   );
 });
 
@@ -58,56 +76,8 @@ export default function PlayerScreen() {
   const [showLyrics, setShowLyrics] = useState(false);
   const [showEQ, setShowEQ] = useState(false);
 
-  // Animation values
-  const rotation = useSharedValue(0);
   const panY = useSharedValue(0);
-  const artworkX = useSharedValue(0);
-  const barHeights = Array.from({length: 30}, () => useSharedValue(4));
-
-  // Mock Lyrics Logic
-  const lyrics = useMemo(() => {
-    if (!currentSong) return [];
-    return [
-      { time: 0, text: "♪ Instrumental Intro ♪" },
-      { time: 5000, text: `Listening to ${currentSong.title}` },
-      { time: 10000, text: `Artist: ${currentSong.artist}` },
-      { time: 15000, text: "Rimuru Music Premium" },
-      { time: 20000, text: "Experience the magic of sound" },
-      { time: 25000, text: "Every beat, every rhythm..." },
-      { time: 30000, text: "Perfectly synced for you." },
-      { time: 35000, text: "♪ Musical Interlude ♪" },
-      { time: 45000, text: "Enjoy the high fidelity audio." },
-      { time: 55000, text: "This is your personal music journey." }
-    ];
-  }, [currentSong?.id]);
-
-  const currentLyricIndex = useMemo(() => {
-    const index = lyrics.findIndex((l, i) => {
-      const next = lyrics[i + 1];
-      return position >= l.time && (!next || position < next.time);
-    });
-    return index === -1 ? 0 : index;
-  }, [position, lyrics]);
-
-  useEffect(() => {
-    if (isPlaying) {
-      rotation.value = withRepeat(
-        withTiming(rotation.value + 360, { duration: 30000, easing: Easing.linear }),
-        -1,
-        false
-      );
-      const interval = setInterval(() => {
-        barHeights.forEach(bar => {
-          bar.value = withTiming(Math.random() * 30 + 4, { duration: 150 });
-        });
-      }, 200);
-      return () => clearInterval(interval);
-    } else {
-      barHeights.forEach(bar => {
-        bar.value = withTiming(4, { duration: 300 });
-      });
-    }
-  }, [isPlaying]);
+  const barHeights = useMemo(() => Array.from({length: 24}, () => Math.random() * 20 + 4), [currentSong?.id]);
 
   const handleClose = useCallback(() => {
     panY.value = withTiming(height, { duration: 250 }, () => {
@@ -128,40 +98,8 @@ export default function PlayerScreen() {
       }
     });
 
-  const horizontalGesture = Gesture.Pan()
-    .activeOffsetX([-20, 20])
-    .onUpdate((e) => {
-      artworkX.value = e.translationX * 0.4;
-    })
-    .onEnd((e) => {
-      if (e.translationX > 60 || e.velocityX > 400) {
-        artworkX.value = withTiming(width, { duration: 200 }, () => {
-          runOnJS(nextSong)();
-          artworkX.value = -width;
-          artworkX.value = withSpring(0);
-        });
-      } else if (e.translationX < -60 || e.velocityX < -400) {
-        artworkX.value = withTiming(-width, { duration: 200 }, () => {
-          runOnJS(prevSong)();
-          artworkX.value = width;
-          artworkX.value = withSpring(0);
-        });
-      } else {
-        artworkX.value = withSpring(0);
-      }
-    });
-
-  const composedGesture = Gesture.Simultaneous(verticalGesture, horizontalGesture);
-
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: panY.value }],
-  }));
-
-  const animatedArtworkStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${rotation.value}deg` },
-      { translateX: artworkX.value }
-    ],
   }));
 
   if (!currentSong) return null;
@@ -173,26 +111,23 @@ export default function PlayerScreen() {
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const artworkSize = width * 0.72;
+  const artworkSize = width * 0.75;
 
   return (
-    <GestureDetector gesture={composedGesture}>
+    <GestureDetector gesture={verticalGesture}>
       <Animated.View style={[styles.container, animatedContainerStyle]}>
         <PremiumBackground colors={colors} />
 
         <View style={[styles.content, { paddingTop: insets.top, paddingBottom: insets.bottom + Theme.spacing.md }]}>
-          <View style={styles.dragHandle} />
-          
           <View style={styles.header}>
             <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
-              <ChevronDown color={Theme.colors.text} size={32} />
+              <ChevronDown color="#FFF" size={32} />
             </TouchableOpacity>
             <View style={styles.headerInfo}>
-              <Text style={styles.headerSub}>{isBuffering ? 'BUFFERING...' : 'PLAYING FROM LIBRARY'}</Text>
-              <Text style={styles.headerTitle} numberOfLines={1}>{currentSong.album || 'Unknown Album'}</Text>
+              <Text style={styles.headerSub}>PLAYING FROM LIBRARY</Text>
             </View>
             <TouchableOpacity style={styles.iconBtn}>
-              <MoreVertical color={Theme.colors.text} size={24} />
+              <MoreVertical color="#FFF" size={24} />
             </TouchableOpacity>
           </View>
 
@@ -224,65 +159,54 @@ export default function PlayerScreen() {
                 <GlassView style={styles.overlayContainer} intensity={40}>
                   <Text style={styles.overlayTitle}>Lyrics</Text>
                   <ScrollView showsVerticalScrollIndicator={false}>
-                    {lyrics.map((lyric, idx) => {
-                      const isActive = idx === currentLyricIndex;
-                      return (
-                        <Text 
-                          key={idx} 
-                          style={[
-                            styles.lyricLine, 
-                            isActive && { color: Theme.colors.primary, fontSize: 24, fontWeight: '900', opacity: 1 }
-                          ]}
-                        >
-                          {lyric.text}
-                        </Text>
-                      );
-                    })}
+                    <Text style={styles.lyricLine}>Synced lyrics appearing soon in V2...</Text>
                     <View style={{height: 100}} />
                   </ScrollView>
                 </GlassView>
               </Animated.View>
             ) : (
-              <Animated.View entering={FadeInDown} style={styles.artworkCenter}>
-                <Animated.View style={[styles.artworkWrapper, animatedArtworkStyle]}>
-                  <View style={[styles.artworkShadow, { shadowColor: colors.primary || Theme.colors.primary }]} />
-                  <PlayerArtwork artwork={currentSong.artwork} size={artworkSize} />
-                </Animated.View>
-
+              <View style={styles.artworkCenter}>
+                <PlayerArtwork artwork={currentSong.artwork} size={artworkSize} isPlaying={isPlaying} />
+                
                 <View style={styles.visualizerContainer}>
                   {barHeights.map((h, i) => (
-                    <Animated.View 
+                    <View 
                       key={i} 
                       style={[
                         styles.visualizerBar, 
                         { 
-                          height: h, 
+                          height: isPlaying ? h * (Math.random() * 0.5 + 0.8) : 4, 
                           backgroundColor: colors.primary || Theme.colors.primary, 
-                          opacity: 0.3 + (i / barHeights.length) * 0.7 
                         }
                       ]} 
                     />
                   ))}
                 </View>
-              </Animated.View>
+
+                {isBuffering && (
+                  <View style={styles.bufferContainer}>
+                    <ActivityIndicator color="#FFF" size="small" />
+                    <Text style={styles.bufferText}>Buffering...</Text>
+                  </View>
+                )}
+
+                <View style={styles.songMeta}>
+                  <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
+                  <Text style={styles.artist} numberOfLines={1}>{currentSong.artist}</Text>
+                </View>
+                
+                <TouchableOpacity onPress={() => toggleFavorite(currentSong.id)} style={styles.heartBtnLarge}>
+                  <Heart 
+                    color={isFavorite(currentSong.id) ? Theme.colors.heart : 'rgba(255,255,255,0.4)'} 
+                    size={28} 
+                    fill={isFavorite(currentSong.id) ? Theme.colors.heart : 'transparent'} 
+                  />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
-          <GlassView style={styles.controlsGlass} intensity={25}>
-            <View style={styles.songMeta}>
-              <View style={{flex: 1}}>
-                <Text style={styles.title} numberOfLines={1}>{currentSong.title}</Text>
-                <Text style={styles.artist} numberOfLines={1}>{currentSong.artist}</Text>
-              </View>
-              <TouchableOpacity onPress={() => toggleFavorite(currentSong.id)} style={styles.heartBtn}>
-                <Heart 
-                  color={isFavorite(currentSong.id) ? Theme.colors.heart : 'rgba(255,255,255,0.4)'} 
-                  size={30} 
-                  fill={isFavorite(currentSong.id) ? Theme.colors.heart : 'transparent'} 
-                />
-              </TouchableOpacity>
-            </View>
-
+          <View style={styles.bottomControls}>
             <View style={styles.progressContainer}>
               <WaveformProgress position={position} duration={duration} onSeek={seekTo} activeColor={colors.primary || Theme.colors.primary} />
               <View style={styles.timeLabels}>
@@ -292,57 +216,47 @@ export default function PlayerScreen() {
             </View>
 
             <View style={styles.playbackControls}>
-              {/* Shuffle */}
               <TouchableOpacity onPress={toggleShuffle} style={styles.sideControlBtn}>
-                <Shuffle color={isShuffle ? colors.primary || Theme.colors.primary : 'rgba(255,255,255,0.45)'} size={22} />
-                {isShuffle && <View style={[styles.activeDot, { backgroundColor: colors.primary || Theme.colors.primary }]} />}
+                <Shuffle color={isShuffle ? Theme.colors.primary : 'rgba(255,255,255,0.5)'} size={20} />
               </TouchableOpacity>
 
-              {/* Previous */}
               <TouchableOpacity onPress={prevSong} style={styles.skipBtn}>
-                <SkipBack color="#FFF" size={34} fill="#FFF" />
+                <SkipBack color="#FFF" size={32} fill="#FFF" />
               </TouchableOpacity>
 
-              {/* Play / Pause — the big center button */}
               <TouchableOpacity
                 onPress={togglePlayPause}
                 style={[styles.playBtn, { backgroundColor: colors.primary || Theme.colors.primary }]}
-                activeOpacity={0.8}
               >
-                <View style={styles.playBtnInner}>
-                  {isPlaying
-                    ? <Pause color="#000" size={38} fill="#000" />
-                    : <Play color="#000" size={38} fill="#000" style={{ marginLeft: 5 }} />}
-                </View>
+                {isPlaying
+                  ? <Pause color="#000" size={38} fill="#000" />
+                  : <Play color="#000" size={38} fill="#000" style={{ marginLeft: 4 }} />}
               </TouchableOpacity>
 
-              {/* Next */}
               <TouchableOpacity onPress={nextSong} style={styles.skipBtn}>
-                <SkipForward color="#FFF" size={34} fill="#FFF" />
+                <SkipForward color="#FFF" size={32} fill="#FFF" />
               </TouchableOpacity>
 
-              {/* Repeat */}
               <TouchableOpacity onPress={toggleLoop} style={styles.sideControlBtn}>
-                <Repeat color={isLooping ? colors.primary || Theme.colors.primary : 'rgba(255,255,255,0.45)'} size={22} />
-                {isLooping && <View style={[styles.activeDot, { backgroundColor: colors.primary || Theme.colors.primary }]} />}
+                <Repeat color={isLooping ? Theme.colors.primary : 'rgba(255,255,255,0.5)'} size={20} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.footerActions}>
               <TouchableOpacity onPress={() => setShowLyrics(!showLyrics)} style={styles.footerBtn}>
-                <Languages color={showLyrics ? Theme.colors.primary : 'rgba(255,255,255,0.6)'} size={22} />
-                <Text style={[styles.footerBtnText, showLyrics && {color: Theme.colors.primary}]}>Lyrics</Text>
+                <Languages color="#FFF" size={22} />
+                <Text style={styles.footerBtnText}>Lyrics</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowPlaylist(!showPlaylist)} style={styles.footerBtn}>
-                <ListMusic color={showPlaylist ? Theme.colors.primary : 'rgba(255,255,255,0.6)'} size={22} />
-                <Text style={[styles.footerBtnText, showPlaylist && {color: Theme.colors.primary}]}>Queue</Text>
+                <ListMusic color="#FFF" size={22} />
+                <Text style={styles.footerBtnText}>Queue</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowEQ(true)} style={styles.footerBtn}>
-                <Settings2 color="rgba(255,255,255,0.6)" size={22} />
+                <Settings2 color="#FFF" size={22} />
                 <Text style={styles.footerBtnText}>EQ</Text>
               </TouchableOpacity>
             </View>
-          </GlassView>
+          </View>
         </View>
 
         <Modal visible={showEQ} transparent animationType="slide">
@@ -355,12 +269,7 @@ export default function PlayerScreen() {
                 </TouchableOpacity>
               </View>
               <View style={styles.eqContent}>
-                <Text style={styles.eqComingSoon}>Vibrant EQ Coming in V3 Update!</Text>
-                <View style={styles.eqMock}>
-                  {[0.7, 0.4, 0.9, 0.6, 0.8, 0.5].map((h, i) => (
-                    <View key={i} style={[styles.eqBar, {height: 100 * h, backgroundColor: Theme.colors.primary}]} />
-                  ))}
-                </View>
+                <Text style={styles.eqComingSoon}>Vibrant EQ Coming Soon!</Text>
               </View>
             </GlassView>
           </View>
@@ -371,71 +280,64 @@ export default function PlayerScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Theme.colors.background },
+  container: { flex: 1, backgroundColor: '#000' },
   content: { flex: 1, paddingHorizontal: Theme.spacing.lg },
-  dragHandle: { width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: Theme.spacing.sm },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Theme.spacing.md },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Theme.spacing.md, marginBottom: Theme.spacing.lg },
   iconBtn: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
   headerInfo: { flex: 1, alignItems: 'center' },
-  headerSub: { color: Theme.colors.textSecondary, fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
-  headerTitle: { color: Theme.colors.text, fontSize: 14, fontWeight: '700', marginTop: 2 },
+  headerSub: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '800', letterSpacing: 2 },
   mainLayout: { flex: 1, justifyContent: 'center' },
   artworkCenter: { alignItems: 'center' },
-  artworkWrapper: { position: 'relative' },
-  artworkShadow: { 
-    ...StyleSheet.absoluteFillObject, 
+  artworkContainer: { 
     borderRadius: 999, 
-    opacity: 0.4, 
-    shadowOffset: { width: 0, height: 20 }, 
-    shadowOpacity: 1, 
-    shadowRadius: 40, 
-    elevation: 25 
+    overflow: 'hidden', 
+    borderWidth: 8, 
+    borderColor: 'rgba(255,255,255,0.05)',
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
   },
-  artworkContainer: { borderRadius: 999, overflow: 'hidden', borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)' },
-  visualizerContainer: { flexDirection: 'row', height: 40, alignItems: 'flex-end', gap: 4, marginTop: 40 },
-  visualizerBar: { width: 5, borderRadius: 2.5, minHeight: 4 },
-  controlsGlass: { padding: Theme.spacing.lg, borderRadius: Theme.radius.xl, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
-  songMeta: { flexDirection: 'row', alignItems: 'center', marginBottom: Theme.spacing.md },
-  title: { color: Theme.colors.text, fontSize: 26, fontWeight: '900', letterSpacing: -0.5 },
-  artist: { color: Theme.colors.textSecondary, fontSize: 16, fontWeight: '500', marginTop: 2 },
-  heartBtn: { marginLeft: Theme.spacing.md },
-  progressContainer: { marginBottom: Theme.spacing.lg },
-  timeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: Theme.spacing.xs },
-  timeText: { color: Theme.colors.textSecondary, fontSize: 12, fontWeight: '700' },
-  playbackControls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Theme.spacing.lg, paddingHorizontal: 4 },
+  visualizerContainer: { flexDirection: 'row', height: 30, alignItems: 'center', gap: 4, marginTop: 40, marginBottom: 20 },
+  visualizerBar: { width: 3, borderRadius: 2, backgroundColor: '#FFF' },
+  bufferContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+  bufferText: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginLeft: 8 },
+  songMeta: { alignItems: 'center', marginTop: 10 },
+  title: { color: '#FFF', fontSize: 28, fontWeight: '900', textAlign: 'center' },
+  artist: { color: 'rgba(255,255,255,0.6)', fontSize: 18, fontWeight: '500', marginTop: 4, textAlign: 'center' },
+  heartBtnLarge: { marginTop: 20 },
+  bottomControls: { marginTop: 'auto' },
+  progressContainer: { marginBottom: 30 },
+  timeLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  timeText: { color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: '700' },
+  playbackControls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40 },
   sideControlBtn: { width: 44, height: 44, justifyContent: 'center', alignItems: 'center' },
-  activeDot: { width: 5, height: 5, borderRadius: 3, marginTop: 3, alignSelf: 'center' },
   skipBtn: { width: 54, height: 54, justifyContent: 'center', alignItems: 'center' },
   playBtn: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
+    elevation: 10,
   },
-  playBtnInner: { justifyContent: 'center', alignItems: 'center' },
-  footerActions: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: Theme.colors.border, paddingTop: Theme.spacing.lg },
-  footerBtn: { alignItems: 'center', flex: 1 },
-  footerBtnText: { color: Theme.colors.textSecondary, fontSize: 11, fontWeight: '800', marginTop: 4, letterSpacing: 0.5 },
+  footerActions: { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
+  footerBtn: { alignItems: 'center' },
+  footerBtnText: { color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: '700', marginTop: 4 },
   overlayWrapper: { ...StyleSheet.absoluteFillObject, padding: Theme.spacing.md },
   overlayContainer: { flex: 1, borderRadius: Theme.radius.lg, padding: Theme.spacing.lg, overflow: 'hidden' },
-  overlayTitle: { color: Theme.colors.text, fontSize: 24, fontWeight: '900', marginBottom: Theme.spacing.lg },
+  overlayTitle: { color: '#FFF', fontSize: 24, fontWeight: '900', marginBottom: Theme.spacing.lg },
   playlistItem: { flexDirection: 'row', alignItems: 'center', marginBottom: Theme.spacing.md },
   playlistText: { marginLeft: Theme.spacing.md, flex: 1 },
-  playlistTitle: { color: Theme.colors.text, fontSize: 16, fontWeight: '700' },
-  playlistArtist: { color: Theme.colors.textSecondary, fontSize: 13 },
-  lyricLine: { color: 'rgba(255,255,255,0.4)', fontSize: 20, fontWeight: '700', marginBottom: 20, textAlign: 'center' },
+  playlistTitle: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  playlistArtist: { color: 'rgba(255,255,255,0.6)', fontSize: 13 },
+  lyricLine: { color: 'rgba(255,255,255,0.4)', fontSize: 18, fontWeight: '700', marginTop: 40, textAlign: 'center' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   eqModal: { height: height * 0.45, borderTopLeftRadius: Theme.radius.xl, borderTopRightRadius: Theme.radius.xl, padding: Theme.spacing.md },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: Theme.colors.border },
-  modalTitle: { color: Theme.colors.text, fontSize: 20, fontWeight: '800' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: Theme.spacing.md, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)' },
+  modalTitle: { color: '#FFF', fontSize: 20, fontWeight: '800' },
   eqContent: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  eqComingSoon: { color: Theme.colors.textSecondary, fontSize: 16, fontWeight: '600', marginBottom: Theme.spacing.xl },
-  eqMock: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
-  eqBar: { width: 24, borderRadius: 12 },
+  eqComingSoon: { color: 'rgba(255,255,255,0.6)', fontSize: 16, fontWeight: '600' },
 });

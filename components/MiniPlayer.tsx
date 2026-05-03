@@ -39,7 +39,7 @@ function MiniPlayerComponent() {
         exiting={FadeOutDown}
         style={[
           styles.container, 
-          { bottom: Theme.dimensions.tabBarHeight + insets.bottom + Theme.spacing.md }
+          { bottom: Theme.dimensions.tabBarHeight + insets.bottom }
         ]}
       >
         <TouchableOpacity 

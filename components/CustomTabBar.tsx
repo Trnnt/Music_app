@@ -57,11 +57,10 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           };
 
           const label = 
-            options.tabBarLabel !== undefined
-              ? options.tabBarLabel
-              : options.title !== undefined
-              ? options.title
-              : route.name;
+          route.name === 'index' ? 'HOME' : 
+          route.name === 'explore' ? 'EXPLORE' : 
+          route.name === 'library' ? 'LIBRARY' : 
+          route.name === 'account' ? 'ACCOUNT' : route.name.toUpperCase();
 
           const getIcon = (name: string) => {
             switch (name) {
