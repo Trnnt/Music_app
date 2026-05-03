@@ -17,12 +17,10 @@ export const GlassView: React.FC<GlassViewProps> = ({
   ...props 
 }) => {
   return (
-    <View style={[styles.container, { borderRadius }, style]} {...props}>
+    <View style={[{ borderRadius }, style]} {...props}>
       <BlurView intensity={intensity} tint={tint} style={[StyleSheet.absoluteFill, { borderRadius }]} />
       <View style={[styles.border, { borderRadius }]} />
-      <View style={styles.content}>
-        {children}
-      </View>
+      {children}
     </View>
   );
 };

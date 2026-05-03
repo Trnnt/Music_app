@@ -108,12 +108,14 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     height: Theme.dimensions.tabBarHeight,
     borderRadius: Theme.radius.xl,
     borderWidth: 1,
     borderColor: Theme.colors.border,
     overflow: 'hidden',
-    backgroundColor: 'rgba(10, 10, 12, 0.8)', // Darker background for legibility
+    backgroundColor: 'rgba(10, 10, 12, 0.9)', 
   },
   indicator: {
     position: 'absolute',

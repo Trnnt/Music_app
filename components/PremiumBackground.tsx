@@ -77,7 +77,7 @@ const FloatingBlob = ({ color, size, initialX = 0, initialY = 0 }: {
   );
 };
 
-export const PremiumBackground: React.FC<PremiumBackgroundProps> = ({ colors = DEFAULT_COLORS }) => {
+export const PremiumBackground: React.FC<PremiumBackgroundProps & { children?: React.ReactNode }> = ({ colors = DEFAULT_COLORS, children }) => {
   const bgOpacity = useSharedValue(0);
 
   useEffect(() => {
@@ -89,45 +89,48 @@ export const PremiumBackground: React.FC<PremiumBackgroundProps> = ({ colors = D
   }));
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, animatedContainerStyle]}>
-      {/* Base Dark Background */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]} />
+    <View style={StyleSheet.absoluteFill}>
+      <Animated.View style={[StyleSheet.absoluteFill, animatedContainerStyle]}>
+        {/* Base Dark Background */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]} />
 
-      {/* Primary Gradient based on Artwork */}
-      <AnimatedLinearGradient
-        colors={[colors.background, '#000000']}
-        locations={[0, 0.9]}
-        style={StyleSheet.absoluteFill}
-      />
+        {/* Primary Gradient based on Artwork */}
+        <AnimatedLinearGradient
+          colors={[colors.background, '#000000']}
+          locations={[0, 0.9]}
+          style={StyleSheet.absoluteFill}
+        />
 
-      {/* Floating Dynamic Blobs */}
-      <View style={StyleSheet.absoluteFill}>
-        <FloatingBlob 
-          color={colors.primary} 
-          size={width * 1.2} 
-          initialX={-width * 0.3} 
-          initialY={-height * 0.1} 
-        />
-        <FloatingBlob 
-          color={colors.secondary} 
-          size={width * 1.0} 
-          initialX={width * 0.3} 
-          initialY={height * 0.3} 
-        />
-        <FloatingBlob 
-          color={colors.primary} 
-          size={width * 0.8} 
-          initialX={-width * 0.1} 
-          initialY={height * 0.6} 
-        />
-      </View>
+        {/* Floating Dynamic Blobs */}
+        <View style={StyleSheet.absoluteFill}>
+          <FloatingBlob 
+            color={colors.primary} 
+            size={width * 1.2} 
+            initialX={-width * 0.3} 
+            initialY={-height * 0.1} 
+          />
+          <FloatingBlob 
+            color={colors.secondary} 
+            size={width * 1.0} 
+            initialX={width * 0.3} 
+            initialY={height * 0.3} 
+          />
+          <FloatingBlob 
+            color={colors.primary} 
+            size={width * 0.8} 
+            initialX={-width * 0.1} 
+            initialY={height * 0.6} 
+          />
+        </View>
 
-      {/* Heavy Blur for the "Mesh" effect */}
-      <BlurView intensity={100} style={StyleSheet.absoluteFill} tint="dark" />
-      
-      {/* Semi-transparent overlay to ensure content is readable */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
-    </Animated.View>
+        {/* Heavy Blur for the "Mesh" effect */}
+        <BlurView intensity={100} style={StyleSheet.absoluteFill} tint="dark" />
+        
+        {/* Semi-transparent overlay to ensure content is readable */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.4)' }]} />
+      </Animated.View>
+      {children}
+    </View>
   );
 };
 
